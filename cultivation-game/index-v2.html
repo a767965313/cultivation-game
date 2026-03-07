@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修仙合成系统 - MVP v2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+            background: linear-gradient(90deg, #ffd700, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn-capture { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-batch { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .btn-save { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+        .btn-reset { background: linear-gradient(135deg, #ff416c, #ff4b2b); color: white; }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .game-area {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        /* 左侧面板 */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            width: 300px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .panel-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #ffd700;
+            border-bottom: 1px solid rgba(255,215,0,0.3);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .capture-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-capture {
+            padding: 15px;
+            font-size: 16px;
+        }
+        
+        .capture-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .hint-text {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+        
+        .inventory {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .inventory::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .inventory::-webkit-scrollbar-thumb {
+            background: rgba(255,215,0,0.3);
+            border-radius: 3px;
+        }
+        
+        .inventory-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .inventory-item:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        
+        .inventory-item.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255,215,0,0.3);
+            background: rgba(255,215,0,0.1);
+        }
+        
+        .item-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .purity-bar {
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 3px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .purity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ffd700, #38ef7d);
+            transition: width 0.3s;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .item-desc {
+            font-size: 11px;
+            color: #aaa;
+        }
+        
+        .empty-inventory {
+            text-align: center;
+            color: #666;
+            padding: 30px;
+            font-size: 12px;
+        }
+        
+        /* 中间合成器 */
+        .synthesizer {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .grid-8x8 {
+            display: grid;
+            grid-template-columns: repeat(8, 48px);
+            grid-template-rows: repeat(8, 48px);
+            gap: 3px;
+        }
+        
+        .grid-cell {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .grid-cell:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,215,0,0.4);
+            transform: scale(1.05);
+        }
+        
+        .grid-cell.merging {
+            animation: mergePulse 0.6s ease;
+        }
+        
+        .grid-cell.highlight {
+            background: rgba(255,215,0,0.2);
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255,215,0,0.5);
+        }
+        
+        @keyframes mergePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); box-shadow: 0 0 40px #ffd700; }
+        }
+        
+        .cell-content {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+        
+        .cell-purity {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            background: rgba(0,0,0,0.8);
+            padding: 1px 3px;
+            border-radius: 3px;
+            color: #fff;
+            white-space: nowrap;
+        }
+        
+        .cell-level {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 14px;
+            height: 14px;
+            background: linear-gradient(135deg, #ffd700, #ff6b6b);
+            border-radius: 50%;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+        }
+        
+        .element-gold {
+            background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
+        }
+        .element-wood {
+            background: radial-gradient(circle at 30% 30%, #4ecdc4, #228b22);
+        }
+        .element-water {
+            background: radial-gradient(circle at 30% 30%, #45b7d1, #1e3a8a);
+        }
+        .element-fire {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c41e3a);
+        }
+        .element-earth {
+            background: radial-gradient(circle at 30% 30%, #d4a574, #8b4513);
+        }
+        
+        /* 右侧面板 */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .stat-box {
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-box .label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .stat-box .value {
+            font-size: 18px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .rules {
+            font-size: 12px;
+            line-height: 1.8;
+            color: #aaa;
+        }
+        
+        .rules h4 {
+            color: #ffd700;
+            margin: 15px 0 10px;
+            font-size: 13px;
+        }
+        
+        .rules ul {
+            padding-left: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .rules li {
+            margin-bottom: 5px;
+        }
+        
+        .element-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        
+        .element-tag {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        /* 历史记录 */
+        .history-list {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        
+        .history-item {
+            padding: 6px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 5px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .history-time {
+            color: #666;
+        }
+        
+        /* 通知 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.95);
+            border: 1px solid #ffd700;
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: #ffd700;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            animation: particleFloat 1.5s ease-out forwards;
+            font-size: 20px;
+            z-index: 1000;
+        }
+        
+        @keyframes particleFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(0.5); }
+        }
+        
+        .combo-text {
+            position: fixed;
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 20px #ffd700;
+            z-index: 1001;
+            animation: comboFloat 1.5s ease forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes comboFloat {
+            0% { opacity: 1; transform: translateY(0) scale(0.5); }
+            50% { transform: translateY(-50px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1); }
+        }
+        
+        @media (max-width: 1000px) {
+            .game-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            .panel {
+                width: 100%;
+                max-width: 450px;
+            }
+            .grid-8x8 {
+                grid-template-columns: repeat(8, 40px);
+                grid-template-rows: repeat(8, 40px);
+            }
+            .grid-cell {
+                width: 40px;
+                height: 40px;
+            }
+            .cell-content {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 修仙合成系统 v2</h1>
+        <p class="subtitle">捕捉天地灵气，提纯五行灵石，踏上修仙之路</p>
+        
+        <div class="top-bar">
+            <button class="btn btn-capture" onclick="captureQi(1, event)">✋ 捕捉灵气</button>
+            <button class="btn btn-batch" onclick="captureQi(5, event)">✨ 批量捕捉 (×5)</button>
+            <button class="btn btn-batch" onclick="captureQi(10, event)">🌟 大量捕捉 (×10)</button>
+            <button class="btn btn-save" onclick="saveGame()">💾 保存进度</button>
+            <button class="btn btn-reset" onclick="resetGame()">🔄 重置</button>
+        </div>
+        
+        <div class="game-area">
+            <!-- 左侧面板 -->
+            <div class="left-panel">
+                <div class="panel">
+                    <div class="panel-title">📦 灵气库存 (<span id="inventoryCount">0</span>)</div>
+                    <div class="inventory" id="inventory">
+                        <div class="empty-inventory">点击上方按钮捕捉灵气</div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-title">📜 合成规则</div>
+                    <div class="rules">
+                        <ul>
+                            <li><b>任意3连：</b>任意方向3个相邻相同灵气可合成</li>
+                            <li><b>相邻定义：</b>横、竖、对角线都算相邻</li>
+                            <li><b>纯度提升：</b>10%→30%→60%→90%→100%</li>
+                            <li><b>灵石转化：</b>纯度100%自动转化为灵石</li>
+                            <li><b>灵石升级：</b>3个同级灵石合成高1级</li>
+                        </ul>
+                        
+                        <h4>五行属性</h4>
+                        <div class="element-grid">
+                            <div class="element-tag">🟡 金 - 锐利</div>
+                            <div class="element-tag">🟢 木 - 生发</div>
+                            <div class="element-tag">🔵 水 - 润泽</div>
+                            <div class="element-tag">🔴 火 - 炎上</div>
+                            <div class="element-tag">🟤 土 - 厚重</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中间合成器 -->
+            <div class="synthesizer">
+                <div class="panel-title">⚗️ 灵气合成器 (8×8)</div>
+                <div class="grid-8x8" id="grid"></div>
+            </div>
+            
+            <!-- 右侧面板 -->
+            <div class="right-panel">
+                <div class="panel">
+                    <div class="panel-title">📊 修炼统计</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="label">🎯 捕捉次数</div>
+                            <div class="value" id="captureCount">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">⚡ 合成次数</div>
+                            <div class="value" id="mergeCount">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">💎 获得灵石</div>
+                            <div class="value" id="stoneCount">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">👑 最高等级</div>
+                            <div class="value" id="maxLevel">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">🔥 连击数</div>
+                            <div class="value" id="comboCount">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="label">⚡ 最高连击</div>
+                            <div class="value" id="maxCombo">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-title">📖 合成记录</div>
+                    <div class="history-list" id="historyList">
+                        <div style="text-align: center; color: #666; padding: 20px;">暂无记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 配置 ====================
+        const CONFIG = {
+            GRID_SIZE: 8,
+            INITIAL_QI_COUNT: 8,
+            SAVE_KEY: 'cultivation_game_v2',
+            AUTO_SAVE_INTERVAL: 30000, // 30秒自动保存
+            MAX_HISTORY: 20
+        };
+        
+        // ==================== 状态 ====================
+        let gameState = {
+            grid: Array(CONFIG.GRID_SIZE).fill(null).map(() => Array(CONFIG.GRID_SIZE).fill(null)),
+            inventory: [],
+            selectedItem: null,
+            captureCount: 0,
+            mergeCount: 0,
+            stoneCount: 0,
+            maxLevel: 0,
+            combo: 0,
+            maxCombo: 0,
+            history: []
+        };
+        
+        // ==================== 五行 ====================
+        const ELEMENTS = {
+            gold: { name: '金', icon: '⚔️', color: 'element-gold' },
+            wood: { name: '木', icon: '🌿', color: 'element-wood' },
+            water: { name: '水', icon: '💧', color: 'element-water' },
+            fire: { name: '火', icon: '🔥', color: 'element-fire' },
+            earth: { name: '土', icon: '🏔️', color: 'element-earth' }
+        };
+        
+        const ELEMENT_KEYS = Object.keys(ELEMENTS);
+        
+        // 8个方向：上、下、左、右、左上、右上、左下、右下
+        const DIRECTIONS = [
+            [-1, -1], [-1, 0], [-1, 1],
+            [0, -1],           [0, 1],
+            [1, -1],  [1, 0],  [1, 1]
+        ];
+        
+        // ==================== 工具函数 ====================
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function showToast(message) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function createParticles(x, y, emoji, count = 3) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.textContent = emoji;
+                    particle.style.left = (x + Math.random() * 40 - 20) + 'px';
+                    particle.style.top = (y + Math.random() * 40 - 20) + 'px';
+                    document.body.appendChild(particle);
+                    setTimeout(() => particle.remove(), 1500);
+                }, i * 100);
+            }
+        }
+        
+        function showCombo(x, y, combo) {
+            const text = document.createElement('div');
+            text.className = 'combo-text';
+            text.textContent = combo + '连击!';
+            text.style.left = x + 'px';
+            text.style.top = y + 'px';
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 1500);
+        }
+        
+        function addHistory(message) {
+            const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            gameState.history.unshift({ time, message });
+            if (gameState.history.length > CONFIG.MAX_HISTORY) {
+                gameState.history.pop();
+            }
+            updateHistory();
+        }
+        
+        // ==================== 物品创建 ====================
+        function createQiItem(element) {
+            const el = element || ELEMENT_KEYS[Math.floor(Math.random() * ELEMENT_KEYS.length)];
+            return {
+                id: generateId(),
+                type: 'qi',
+                element: el,
+                purity: 10,
+                level: 0,
+                isStone: false
+            };
+        }
+        
+        function createStone(element, level) {
+            return {
+                id: generateId(),
+                type: 'stone',
+                element: element,
+                purity: 100,
+                level: level,
+                isStone: true
+            };
+        }
+        
+        // ==================== 核心玩法 ====================
+        function captureQi(count, event) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    gameState.captureCount++;
+                    const item = createQiItem();
+                    gameState.inventory.push(item);
+                    updateInventory();
+                    
+                    if (event && i === count - 1) {
+                        createParticles(event.clientX, event.clientY, '✨', 5);
+                    }
+                }, i * 100);
+            }
+            
+            updateStats();
+            showToast(`获得${count}个灵气！`);
+        }
+        
+        function selectItem(item) {
+            if (gameState.selectedItem === item) {
+                gameState.selectedItem = null;
+            } else {
+                gameState.selectedItem = item;
+            }
+            updateInventory();
+        }
+        
+        function onCellClick(row, col) {
+            const cellItem = gameState.grid[row][col];
+            
+            if (cellItem) {
+                gameState.inventory.push(cellItem);
+                gameState.grid[row][col] = null;
+                updateInventory();
+                updateGrid();
+                showToast('灵气已收回库存');
+                gameState.combo = 0;
+                updateStats();
+                return;
+            }
+            
+            if (gameState.selectedItem) {
+                gameState.grid[row][col] = gameState.selectedItem;
+                
+                const idx = gameState.inventory.indexOf(gameState.selectedItem);
+                if (idx > -1) gameState.inventory.splice(idx, 1);
+                
+                gameState.selectedItem = null;
+                updateInventory();
+                updateGrid();
+                
+                setTimeout(() => checkMerge(row, col), 150);
+            } else {
+                showToast('请先选中库存中的灵气');
+            }
+        }
+        
+        // ==================== 新合成系统：任意3个相邻 ====================
+        function checkMerge(row, col) {
+            const item = gameState.grid[row][col];
+            if (!item) return;
+            
+            // 找到所有相邻的相同物品
+            const matches = findAdjacentMatches(row, col, item);
+            
+            if (matches.length >= 2) {
+                // 取前2个进行3合1
+                const mergeGroup = [[row, col], ...matches.slice(0, 2)];
+                performMerge(mergeGroup, [row, col], item);
+            }
+        }
+        
+        function findAdjacentMatches(row, col, item) {
+            const matches = [];
+            
+            for (const [dr, dc] of DIRECTIONS) {
+                const nr = row + dr;
+                const nc = col + dc;
+                
+                if (isValidPos(nr, nc)) {
+                    const neighbor = gameState.grid[nr][nc];
+                    if (neighbor && matchItem(neighbor, item)) {
+                        matches.push([nr, nc]);
+                    }
+                }
+            }
+            
+            return matches;
+        }
+        
+        function isValidPos(row, col) {
+            return row >= 0 && row < CONFIG.GRID_SIZE && col >= 0 && col < CONFIG.GRID_SIZE;
+        }
+        
+        function matchItem(a, b) {
+            return a.element === b.element && 
+                   a.purity === b.purity && 
+                   a.level === b.level &&
+                   a.isStone === b.isStone;
+        }
+        
+        function performMerge(cells, target, item) {
+            // 清除原物品
+            cells.forEach(([r, c]) => {
+                if (!(r === target[0] && c === target[1])) {
+                    gameState.grid[r][c] = null;
+                }
+            });
+            
+            // 计算新物品
+            let newItem;
+            const multiplier = cells.length > 3 ? 1.5 : 1; // 3个以上有加成
+            
+            if (item.isStone) {
+                newItem = createStone(item.element, item.level + 1);
+                addHistory(`${ELEMENTS[item.element].name}灵石升至${newItem.level}级`);
+                showToast(`${ELEMENTS[item.element].name}灵石升级！`);
+            } else {
+                const newPurity = Math.min(100, Math.floor(item.purity * 3 * multiplier));
+                
+                if (newPurity >= 100) {
+                    newItem = createStone(item.element, 1);
+                    gameState.stoneCount++;
+                    addHistory(`获得${ELEMENTS[item.element].name}灵石`);
+                    showToast(`✨ ${ELEMENTS[item.element].name}灵石生成！`);
+                } else {
+                    newItem = {
+                        id: generateId(),
+                        type: 'qi',
+                        element: item.element,
+                        purity: newPurity,
+                        level: 0,
+                        isStone: false
+                    };
+                    showToast(`合成成功！纯度${newPurity}%`);
+                }
+            }
+            
+            gameState.grid[target[0]][target[1]] = newItem;
+            gameState.mergeCount++;
+            gameState.combo++;
+            
+            if (gameState.combo > gameState.maxCombo) {
+                gameState.maxCombo = gameState.combo;
+            }
+            
+            if (newItem.isStone && newItem.level > gameState.maxLevel) {
+                gameState.maxLevel = newItem.level;
+            }
+            
+            // 特效
+            const cell = document.querySelector(`[data-row="${target[0]}"][data-col="${target[1]}"]`);
+            if (cell) {
+                const rect = cell.getBoundingClientRect();
+                cell.classList.add('merging');
+                setTimeout(() => cell.classList.remove('merging'), 600);
+                
+                if (gameState.combo > 1) {
+                    showCombo(rect.left + 20, rect.top, gameState.combo);
+                }
+            }
+            
+            updateStats();
+            updateGrid();
+            
+            // 连锁检测
+            setTimeout(() => checkMerge(target[0], target[1]), 400);
+        }
+        
+        // ==================== 存档 ====================
+        function saveGame() {
+            const data = JSON.stringify(gameState);
+            localStorage.setItem(CONFIG.SAVE_KEY, data);
+            showToast('💾 游戏进度已保存！');
+        }
+        
+        function loadGame() {
+            const data = localStorage.getItem(CONFIG.SAVE_KEY);
+            if (data) {
+                gameState = JSON.parse(data);
+                updateInventory();
+                updateGrid();
+                updateStats();
+                updateHistory();
+                showToast('📂 游戏进度已读取！');
+            }
+        }
+        
+        function resetGame() {
+            if (confirm('确定要重新开始吗？所有进度将清空！')) {
+                localStorage.removeItem(CONFIG.SAVE_KEY);
+                location.reload();
+            }
+        }
+        
+        // ==================== 界面更新 ====================
+        function updateInventory() {
+            const container = document.getElementById('inventory');
+            document.getElementById('inventoryCount').textContent = gameState.inventory.length;
+            
+            if (gameState.inventory.length === 0) {
+                container.innerHTML = '<div class="empty-inventory">点击上方按钮捕捉灵气</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            gameState.inventory.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'inventory-item' + (gameState.selectedItem === item ? ' selected' : '');
+                el.onclick = () => selectItem(item);
+                
+                const element = ELEMENTS[item.element];
+                el.innerHTML = `
+                    <div class="item-icon ${element.color}">
+                        ${element.icon}
+                        <div class="purity-bar">
+                            <div class="purity-fill" style="width: ${item.purity}%"></div>
+                        </div>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${element.name}${item.isStone ? '灵石' : '灵气'}</div>
+                        <div class="item-desc">${item.isStone ? `等级 ${item.level}` : `纯度 ${item.purity}%`}</div>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+        
+        function initGrid() {
+            const container = document.getElementById('grid');
+            container.innerHTML = '';
+            
+            for (let r = 0; r < CONFIG.GRID_SIZE; r++) {
+                for (let c = 0; c < CONFIG.GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.onclick = () => onCellClick(r, c);
+                    container.appendChild(cell);
+                }
+            }
+            updateGrid();
+        }
+        
+        function updateGrid() {
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                const item = gameState.grid[r][c];
+                
+                cell.innerHTML = '';
+                
+                if (item) {
+                    const element = ELEMENTS[item.element];
+                    cell.innerHTML = `
+                        <div class="cell-content ${element.color}">
+                            ${element.icon}
+                            ${!item.isStone ? `<span class="cell-purity">${item.purity}%</span>` : ''}
+                            ${item.isStone ? `<span class="cell-level">${item.level}</span>` : ''}
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        function updateStats() {
+            document.getElementById('captureCount').textContent = gameState.captureCount;
+            document.getElementById('mergeCount').textContent = gameState.mergeCount;
+            document.getElementById('stoneCount').textContent = gameState.stoneCount;
+            document.getElementById('maxLevel').textContent = gameState.maxLevel;
+            document.getElementById('comboCount').textContent = gameState.combo;
+            document.getElementById('maxCombo').textContent = gameState.maxCombo;
+        }
+        
+        function updateHistory() {
+            const container = document.getElementById('historyList');
+            if (gameState.history.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">暂无记录</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            gameState.history.forEach(h => {
+                const el = document.createElement('div');
+                el.className = 'history-item';
+                el.innerHTML = `
+                    <span>${h.message}</span>
+                    <span class="history-time">${h.time}</span>
+                `;
+                container.appendChild(el);
+            });
+        }
+        
+        // ==================== 初始化 ====================
+        function init() {
+            initGrid();
+            
+            const saved = localStorage.getItem(CONFIG.SAVE_KEY);
+            if (saved) {
+                loadGame();
+            } else {
+                for (let i = 0; i < CONFIG.INITIAL_QI_COUNT; i++) {
+                    gameState.inventory.push(createQiItem());
+                }
+                updateInventory();
+                updateStats();
+            }
+            
+            // 自动保存
+            setInterval(() => {
+                if (gameState.mergeCount > 0) {
+                    saveGame();
+                }
+            }, CONFIG.AUTO_SAVE_INTERVAL);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

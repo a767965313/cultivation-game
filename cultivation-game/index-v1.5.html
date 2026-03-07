@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修仙合成系统 - V1.5 炼丹系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1600px; margin: 0 auto; padding: 15px; }
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+            background: linear-gradient(90deg, #ffd700, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+        }
+        .subtitle { text-align: center; color: #888; margin-bottom: 15px; font-size: 12px; }
+        .top-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 12px; transition: all 0.3s; font-weight: bold;
+        }
+        .btn-capture { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-batch { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .btn-save { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+        .btn-reset { background: linear-gradient(135deg, #ff416c, #ff4b2b); color: white; }
+        .btn-collection { background: linear-gradient(135deg, #8e2de2, #4a00e0); color: white; }
+        .btn-challenge { background: linear-gradient(135deg, #ff416c, #ff9a44); color: white; }
+        .btn-alchemy { background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .game-area { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .left-panel, .right-panel { display: flex; flex-direction: column; gap: 12px; }
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 12px; width: 260px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel-title {
+            font-size: 13px; margin-bottom: 10px; color: #ffd700;
+            border-bottom: 1px solid rgba(255,215,0,0.3);
+            padding-bottom: 6px; display: flex; align-items: center; gap: 5px;
+        }
+        .inventory { max-height: 120px; overflow-y: auto; }
+        .inventory-item {
+            display: flex; align-items: center; gap: 6px; padding: 5px;
+            background: rgba(255,255,255,0.05); border-radius: 5px;
+            margin-bottom: 3px; cursor: pointer; transition: all 0.3s;
+            border: 2px solid transparent; font-size: 11px;
+        }
+        .inventory-item:hover { background: rgba(255,255,255,0.1); }
+        .inventory-item.selected { border-color: #ffd700; }
+        .item-icon {
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; position: relative;
+        }
+        .purity-bar {
+            position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+            width: 18px; height: 2px; background: rgba(0,0,0,0.3); border-radius: 1px; overflow: hidden;
+        }
+        .purity-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd700); }
+        .item-info { flex: 1; }
+        .item-name { font-size: 11px; font-weight: bold; }
+        .item-desc { font-size: 9px; color: #aaa; }
+        .empty-inventory { text-align: center; color: #666; padding: 10px; font-size: 10px; }
+        
+        /* 炼丹面板 */
+        .alchemy-panel {
+            background: linear-gradient(135deg, rgba(0,210,255,0.1), rgba(58,123,213,0.1));
+            border: 1px solid rgba(0,210,255,0.3);
+        }
+        .alchemy-recipe-list {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .recipe-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .recipe-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(0,210,255,0.5);
+        }
+        .recipe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .recipe-name { font-size: 12px; font-weight: bold; color: #00d2ff; }
+        .recipe-duration { font-size: 10px; color: #aaa; }
+        .recipe-desc { font-size: 10px; color: #ccc; margin-bottom: 4px; }
+        .recipe-cost { font-size: 10px; color: #ffd700; }
+        .recipe-btn {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        .recipe-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* 丹药效果显示 */
+        .active-pills {
+            margin-top: 10px;
+        }
+        .pill-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            background: rgba(0,210,255,0.1);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 11px;
+            border: 1px solid rgba(0,210,255,0.3);
+        }
+        .pill-icon { font-size: 16px; }
+        .pill-info { flex: 1; }
+        .pill-name { font-weight: bold; color: #00d2ff; }
+        .pill-timer { font-size: 9px; color: #aaa; }
+        
+        /* 挑战面板 */
+        .challenge-panel {
+            background: linear-gradient(135deg, rgba(255,65,108,0.1), rgba(255,154,68,0.1));
+            border: 1px solid rgba(255,65,108,0.3);
+        }
+        .challenge-list {
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .challenge-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            padding: 6px;
+            margin-bottom: 4px;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            font-size: 10px;
+        }
+        .challenge-item:hover { border-color: rgba(255,65,108,0.5); }
+        .challenge-item.active { border-color: #ff416c; background: rgba(255,65,108,0.15); }
+        .challenge-item.completed { opacity: 0.5; border-color: #38ef7d; }
+        .challenge-name { font-weight: bold; color: #ff9a44; }
+        .challenge-desc { color: #aaa; font-size: 9px; }
+        .challenge-reward { color: #ffd700; font-size: 9px; }
+        
+        /* 图鉴面板 */
+        .collection-panel {
+            background: linear-gradient(135deg, rgba(142,45,226,0.1), rgba(74,0,224,0.1));
+            border: 1px solid rgba(142,45,226,0.3);
+        }
+        .collection-progress {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .progress-bar-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #8e2de2, #4a00e0);
+            transition: width 0.5s ease;
+        }
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .collection-item {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .collection-item.collected {
+            background: rgba(142,45,226,0.2);
+            border-color: rgba(142,45,226,0.5);
+        }
+        .collection-item.locked { opacity: 0.3; }
+        .collection-item .icon { font-size: 16px; }
+        .collection-item .level { font-size: 8px; color: #ffd700; }
+        
+        /* 修为面板 */
+        .cultivation-panel {
+            background: linear-gradient(135deg, rgba(245,175,25,0.1), rgba(241,39,17,0.1));
+            border: 1px solid rgba(245,175,25,0.3);
+        }
+        .realm-name { font-size: 14px; font-weight: bold; text-align: center;
+            background: linear-gradient(90deg, #f5af19, #f12711);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .realm-stage { text-align: center; font-size: 11px; color: #f5af19; margin-bottom: 6px; }
+        .xp-bar-container { background: rgba(0,0,0,0.3); border-radius: 6px; height: 14px;
+            overflow: hidden; position: relative; margin-bottom: 5px;
+        }
+        .xp-bar { height: 100%; background: linear-gradient(90deg, #f5af19, #f12711);
+            transition: width 0.5s ease; display: flex; align-items: center;
+            justify-content: center; font-size: 9px;
+        }
+        .xp-text { text-align: center; font-size: 10px; color: #aaa; margin-bottom: 6px; }
+        .cultivate-btn { width: 100%; padding: 6px; font-size: 11px; }
+        .bonus-text { text-align: center; font-size: 10px; color: #38ef7d; margin-top: 4px; }
+        
+        /* 工坊面板 */
+        .shop-panel {
+            background: linear-gradient(135deg, rgba(0,176,155,0.1), rgba(150,201,61,0.1));
+            border: 1px solid rgba(0,176,155,0.3);
+        }
+        .currency-display {
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            padding: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+        .shop-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            padding: 6px;
+            margin-bottom: 5px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .shop-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+        .shop-item-name { font-size: 11px; font-weight: bold; color: #ffd700; }
+        .shop-item-price { font-size: 9px; color: #38ef7d; }
+        .shop-item-desc { font-size: 9px; color: #aaa; margin-bottom: 3px; }
+        .shop-btn {
+            width: 100%;
+            padding: 4px;
+            font-size: 9px;
+            background: linear-gradient(135deg, #00b09b, #96c93d);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .synthesizer {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .grid-8x8 {
+            display: grid;
+            grid-template-columns: repeat(8, 38px);
+            grid-template-rows: repeat(8, 38px);
+            gap: 2px;
+        }
+        .grid-cell {
+            width: 38px; height: 38px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .grid-cell:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,215,0,0.4); }
+        .grid-cell.merging { animation: mergePulse 0.6s ease; }
+        @keyframes mergePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); box-shadow: 0 0 40px #ffd700; }
+        }
+        .cell-content {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; position: relative;
+        }
+        .cell-purity {
+            position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+            font-size: 6px; background: rgba(0,0,0,0.8); padding: 1px 2px;
+            border-radius: 2px;
+        }
+        .cell-level {
+            position: absolute; top: -2px; right: -2px; width: 10px; height: 10px;
+            background: linear-gradient(135deg, #ffd700, #ff6b6b);
+            border-radius: 50%; font-size: 7px; display: flex;
+            align-items: center; justify-content: center; color: #000; font-weight: bold;
+        }
+        .element-gold { background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b); }
+        .element-wood { background: radial-gradient(circle at 30% 30%, #4ecdc4, #228b22); }
+        .element-water { background: radial-gradient(circle at 30% 30%, #45b7d1, #1e3a8a); }
+        .element-fire { background: radial-gradient(circle at 30% 30%, #ff6b6b, #c41e3a); }
+        .element-earth { background: radial-gradient(circle at 30% 30%, #d4a574, #8b4513); }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .stat-box { background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; text-align: center; }
+        .stat-box .label { font-size: 9px; color: #888; }
+        .stat-box .value { font-size: 12px; color: #ffd700; font-weight: bold; }
+        
+        .merge-info {
+            background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 6px; padding: 8px; margin-bottom: 8px; font-size: 10px;
+        }
+        .merge-info strong { color: #ffd700; }
+        
+        .toast {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(0,0,0,0.95); border: 1px solid #ffd700;
+            border-radius: 10px; padding: 12px 16px; color: #ffd700;
+            font-size: 13px; z-index: 1000; animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .particle {
+            position: fixed; pointer-events: none;
+            animation: particleFloat 1.5s ease-out forwards; font-size: 16px; z-index: 1000;
+        }
+        @keyframes particleFloat { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
+        
+        /* 丹药效果浮动文字 */
+        .pill-effect {
+            position: fixed;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00d2ff;
+            text-shadow: 0 0 10px #00d2ff;
+            z-index: 1001;
+            animation: floatUp 2s ease forwards;
+            pointer-events: none;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(0.8); }
+            50% { transform: translateY(-30px) scale(1.1); }
+            100% { opacity: 0; transform: translateY(-60px); }
+        }
+        
+        @media (max-width: 1200px) {
+            .game-area { flex-direction: column; align-items: center; }
+            .panel { width: 100%; max-width: 350px; }
+            .grid-8x8 { grid-template-columns: repeat(8, 32px); grid-template-rows: repeat(8, 32px); }
+            .grid-cell { width: 32px; height: 32px; }
+            .cell-content { width: 24px; height: 24px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 修仙合成系统 V1.5</h1>
+        <p class="subtitle">捕捉天地灵气，炼制丹药，完成挑战，成就无上仙道</p>
+        
+        <div class="top-bar">
+            <button class="btn btn-capture" onclick="captureQi(1, event)">✋ 捕捉</button>
+            <button class="btn btn-batch" onclick="captureQi(5, event)">✨ ×5</button>
+            <button class="btn btn-batch" onclick="captureQi(10, event)">🌟 ×10</button>
+            <button class="btn btn-collection" onclick="showCollectionModal()">📚 图鉴</button>
+            <button class="btn btn-challenge" onclick="showChallengePanel()">🏆 挑战</button>
+            <button class="btn btn-alchemy" onclick="showAlchemyPanel()">⚗️ 炼丹</button>
+            <button class="btn btn-save" onclick="saveGame()">💾 保存</button>
+            <button class="btn btn-reset" onclick="resetGame()">🔄 重置</button>
+        </div>
+        
+        <div class="game-area">
+            <div class="left-panel">
+                <div class="panel">
+                    <div class="panel-title">📦 库存 (<span id="inventoryCount">0</span>)</div>
+                    <div class="inventory" id="inventory"><div class="empty-inventory">点击捕捉灵气</div></div>
+                </div>
+                
+                <div class="panel alchemy-panel" id="alchemyPanel">
+                    <div class="panel-title">⚗️ 炼丹炉</div>
+                    <div class="alchemy-recipe-list" id="alchemyRecipeList"></div>
+                    <div class="active-pills" id="activePills"></div>
+                </div>
+            </div>
+            
+            <div class="synthesizer">
+                <div class="panel-title">⚗️ 合成器 (8×8)</div>
+                <div class="merge-info">
+                    <strong>💡 规则：</strong>上下左右相邻3+相同灵气可合成，越多品质越高
+                </div>
+                <div class="grid-8x8" id="grid"></div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="panel">
+                    <div class="panel-title">📊 统计</div>
+                    <div class="stats-grid">
+                        <div class="stat-box"><div class="label">🎯 捕捉</div><div class="value" id="captureCount">0</div></div>
+                        <div class="stat-box"><div class="label">⚡ 合成</div><div class="value" id="mergeCount">0</div></div>
+                        <div class="stat-box"><div class="label">💎 灵石</div><div class="value" id="stoneCount">0</div></div>
+                        <div class="stat-box"><div class="label">🏆 挑战</div><div class="value" id="challengeCompleted">0/6</div></div>
+                    </div>
+                </div>
+                
+                <div class="panel cultivation-panel">
+                    <div class="panel-title">🧘‍♂️ 修为</div>
+                    <div class="realm-name" id="realmName">炼气期</div>
+                    <div class="realm-stage" id="realmStage">前期</div>
+                    <div class="xp-bar-container"><div class="xp-bar" id="xpBar" style="width: 0%">0%</div></div>
+                    <div class="xp-text" id="xpText">0 / 100 修为</div>
+                    <button class="btn btn-cultivate cultivate-btn" onclick="openCultivateModal()">🧘‍♂️ 吸收修炼</button>
+                    <div class="bonus-text" id="cultivationBonus">灵气获取 +0%</div>
+                </div>
+                
+                <div class="panel shop-panel">
+                    <div class="panel-title">🏪 工坊</div>
+                    <div class="currency-display">
+                        <span>💎 <span id="shopStoneCount">0</span></span>
+                        <span>⚡ <span id="shopMergeCount">0</span></span>
+                    </div>
+                    <div id="shopItems"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const CONFIG = {
+            GRID_SIZE: 8,
+            INITIAL_QI_COUNT: 10,
+            SAVE_KEY: 'cultivation_game_v1_5',
+            AUTO_SAVE_INTERVAL: 30000
+        };
+        
+        const ADJACENT = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        
+        // 境界体系
+        const REALMS = [
+            { name: '炼气期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 100, bonus: 0 },
+            { name: '筑基期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 200, bonus: 10 },
+            { name: '金丹期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 400, bonus: 25 },
+            { name: '元婴期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 800, bonus: 50 },
+            { name: '化神期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 1600, bonus: 80 },
+            { name: '炼虚期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 3200, bonus: 120 },
+            { name: '合体期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 6400, bonus: 170 },
+            { name: '大乘期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 12800, bonus: 230 },
+            { name: '渡劫期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 25600, bonus: 300 }
+        ];
+        
+        // 工坊商品
+        const SHOP_ITEMS = [
+            { id: 'auto_capture', name: '🤖 自动捕捉', basePrice: 5, priceType: 'stone', desc: '自动捕捉灵气', maxLevel: 5, getEffect: (l) => `每${Math.max(2, 10-l*1.5).toFixed(1)}秒` },
+            { id: 'merge_boost', name: '⚡ 合成加速', basePrice: 10, priceType: 'stone', desc: '合成品质加成', maxLevel: 5, getEffect: (l) => `+${l*10}%` },
+            { id: 'xp_boost', name: '📿 修为增幅', basePrice: 100, priceType: 'merge', desc: '修为获取加成', maxLevel: 3, getEffect: (l) => `+${l*20}%` },
+            { id: 'lucky_charm', name: '🍀 聚灵符', basePrice: 50, priceType: 'stone', desc: '额外灵气概率', maxLevel: 5, getEffect: (l) => `${l*20}%` }
+        ];
+        
+        // 丹药配方
+        const ALCHEMY_RECIPES = [
+            {
+                id: 'speed_pill',
+                name: '⚡ 疾风丹',
+                icon: '💨',
+                desc: '合成速度+50%，持续60秒',
+                duration: 60,
+                cost: { stone: 5, element: 'wind' },
+                effect: () => { gameState.activePills.speed = Date.now() + 60000; showPillEffect('⚡ 疾风丹生效！合成速度+50%'); }
+            },
+            {
+                id: 'luck_pill',
+                name: '🍀 聚灵丹',
+                icon: '✨',
+                desc: '灵气获取+100%，持续90秒',
+                duration: 90,
+                cost: { stone: 8, element: 'luck' },
+                effect: () => { gameState.activePills.luck = Date.now() + 90000; showPillEffect('🍀 聚灵丹生效！灵气获取+100%'); }
+            },
+            {
+                id: 'xp_pill',
+                name: '📿 破境丹',
+                icon: '🔮',
+                desc: '修为获取+200%，持续60秒',
+                duration: 60,
+                cost: { stone: 10, element: 'xp' },
+                effect: () => { gameState.activePills.xp = Date.now() + 60000; showPillEffect('📿 破境丹生效！修为获取+200%'); }
+            },
+            {
+                id: 'merge_pill',
+                name: '🔥 提纯丹',
+                icon: '🔥',
+                desc: '合成品质+100%，持续45秒',
+                duration: 45,
+                cost: { stone: 12, element: 'fire' },
+                effect: () => { gameState.activePills.merge = Date.now() + 45000; showPillEffect('🔥 提纯丹生效！合成品质+100%'); }
+            },
+            {
+                id: 'combo_pill',
+                name: '⚔️ 连击丹',
+                icon: '⚡',
+                desc: '连锁合成概率+50%，持续60秒',
+                duration: 60,
+                cost: { stone: 15, element: 'combo' },
+                effect: () => { gameState.activePills.combo = Date.now() + 60000; showPillEffect('⚔️ 连击丹生效！连锁概率+50%'); }
+            }
+        ];
+        
+        // 挑战任务
+        const CHALLENGES = [
+            { id: 'speed_run_1', name: '⚡ 极速合成', desc: '60秒内合成5颗灵石', difficulty: '简单', timeLimit: 60, check: (s, e) => e.stonesInTime >= 5, reward: '💎 x10', executeReward: () => { gameState.stoneCount += 10; } },
+            { id: 'big_merge', name: '🔥 极限提纯', desc: '单次合成使用8+灵气', difficulty: '中等', timeLimit: 0, check: (s, e) => e.maxMergeSize >= 8, reward: '💎 x20', executeReward: () => { gameState.stoneCount += 20; } },
+            { id: 'high_level', name: '👑 高级灵石', desc: '合成一颗5级灵石', difficulty: '困难', timeLimit: 0, check: (s, e) => s.maxLevel >= 5, reward: '⚡ x50', executeReward: () => { gameState.mergeCount += 50; } },
+            { id: 'speed_run_2', name: '⏱️ 炼金术士', desc: '120秒内合成10颗灵石', difficulty: '困难', timeLimit: 120, check: (s, e) => e.stonesInTime >= 10, reward: '💎 x30', executeReward: () => { gameState.stoneCount += 30; } },
+            { id: 'element_master', name: '🎯 五行大师', desc: '每种属性至少合成1颗灵石', difficulty: '中等', timeLimit: 0, check: (s, e) => { const elements = new Set(); Object.keys(s.collection).forEach(key => { const [elem] = key.split('_'); elements.add(elem); }); return elements.size >= 5; }, reward: '💎 x25', executeReward: () => { gameState.stoneCount += 25; } },
+            { id: 'combo_master', name: '⚔️ 连击大师', desc: '单次触发3次连锁合成', difficulty: '困难', timeLimit: 0, check: (s, e) => e.maxCombo >= 3, reward: '⚡ x100', executeReward: () => { gameState.mergeCount += 100; } }
+        ];
+        
+        // 游戏状态
+        let gameState = {
+            grid: Array(CONFIG.GRID_SIZE).fill(null).map(() => Array(CONFIG.GRID_SIZE).fill(null)),
+            inventory: [],
+            selectedItem: null,
+            captureCount: 0,
+            mergeCount: 0,
+            stoneCount: 0,
+            maxLevel: 0,
+            realmIndex: 0,
+            stageIndex: 0,
+            currentXP: 0,
+            shopLevels: { auto_capture: 0, merge_boost: 0, xp_boost: 0, lucky_charm: 0 },
+            collection: {},
+            achievements: {},
+            challengeProgress: {},
+            currentChallenge: null,
+            challengeEvents: { stonesInTime: 0, maxMergeSize: 0, maxCombo: 0 },
+            // V1.5 新增
+            activePills: {}
+        };
+        
+        let autoCaptureInterval = null;
+        let challengeTimer = null;
+        let challengeTimeLeft = 0;
+        let pillTimer = null;
+        
+        const ELEMENTS = {
+            gold: { name: '金', icon: '⚔️', color: 'element-gold' },
+            wood: { name: '木', icon: '🌿', color: 'element-wood' },
+            water: { name: '水', icon: '💧', color: 'element-water' },
+            fire: { name: '火', icon: '🔥', color: 'element-fire' },
+            earth: { name: '土', icon: '🏔️', color: 'element-earth' }
+        };
+        
+        const ELEMENT_KEYS = Object.keys(ELEMENTS);
+        
+        function generateCollectionItems() {
+            const items = [];
+            ELEMENT_KEYS.forEach(element => {
+                for (let level = 1; level <= 9; level++) {
+                    items.push({ element, level, id: `${element}_${level}` });
+                }
+            });
+            return items;
+        }
+        
+        const COLLECTION_ITEMS = generateCollectionItems();
+        
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function showToast(message) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function showPillEffect(text) {
+            const el = document.createElement('div');
+            el.className = 'pill-effect';
+            el.textContent = text;
+            el.style.left = '50%';
+            el.style.top = '50%';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2000);
+        }
+        
+        function createParticles(x, y, emoji, count = 3) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.textContent = emoji;
+                    particle.style.left = (x + Math.random() * 40 - 20) + 'px';
+                    particle.style.top = (y + Math.random() * 40 - 20) + 'px';
+                    document.body.appendChild(particle);
+                    setTimeout(() => particle.remove(), 1500);
+                }, i * 100);
+            }
+        }
+        
+        function isValidPos(row, col) {
+            return row >= 0 && row < CONFIG.GRID_SIZE && col >= 0 && col < CONFIG.GRID_SIZE;
+        }
+        
+        function createQiItem(element) {
+            const el = element || ELEMENT_KEYS[Math.floor(Math.random() * ELEMENT_KEYS.length)];
+            return { id: generateId(), type: 'qi', element: el, purity: 10, level: 0, isStone: false };
+        }
+        
+        function createStone(element, level) {
+            return { id: generateId(), type: 'stone', element: element, purity: 100, level: level, isStone: true };
+        }
+        
+        function matchItem(a, b) {
+            return a.element === b.element && a.purity === b.purity && a.level === b.level && a.isStone === b.isStone;
+        }
+        
+        function getCultivationBonus() {
+            return REALMS[gameState.realmIndex].bonus;
+        }
+        
+        function addToCollection(element, level) {
+            const key = `${element}_${level}`;
+            if (!gameState.collection[key]) {
+                gameState.collection[key] = { count: 0, firstTime: Date.now() };
+            }
+            gameState.collection[key].count++;
+        }
+        
+        // 检查丹药效果
+        function getPillEffect(pillType) {
+            const endTime = gameState.activePills[pillType];
+            if (!endTime) return 1;
+            if (Date.now() > endTime) {
+                delete gameState.activePills[pillType];
+                return 1;
+            }
+            switch(pillType) {
+                case 'speed': return 1.5;
+                case 'luck': return 2;
+                case 'xp': return 3;
+                case 'merge': return 2;
+                case 'combo': return 1.5;
+                default: return 1;
+            }
+        }
+        
+        function updateActivePills() {
+            const container = document.getElementById('activePills');
+            if (!container) return;
+            
+            container.innerHTML = '<div style="font-size: 11px; color: #00d2ff; margin-bottom: 5px;">生效中：</div>';
+            
+            let hasActive = false;
+            Object.entries(gameState.activePills).forEach(([type, endTime]) => {
+                if (Date.now() < endTime) {
+                    hasActive = true;
+                    const remaining = Math.ceil((endTime - Date.now()) / 1000);
+                    const recipe = ALCHEMY_RECIPES.find(r => r.id === type + '_pill');
+                    if (recipe) {
+                        const el = document.createElement('div');
+                        el.className = 'pill-item';
+                        el.innerHTML = `
+                            <div class="pill-icon">${recipe.icon}</div>
+                            <div class="pill-info">
+                                <div class="pill-name">${recipe.name}</div>
+                                <div class="pill-timer">剩余 ${remaining} 秒</div>
+                            </div>
+                        `;
+                        container.appendChild(el);
+                    }
+                } else {
+                    delete gameState.activePills[type];
+                }
+            });
+            
+            if (!hasActive) {
+                container.innerHTML = '';
+            }
+        }
+        
+        // 炼丹系统
+        function updateAlchemyUI() {
+            const container = document.getElementById('alchemyRecipeList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            ALCHEMY_RECIPES.forEach(recipe => {
+                const canAfford = gameState.stoneCount >= recipe.cost.stone;
+                const isActive = gameState.activePills[recipe.id.replace('_pill', '')] && Date.now() < gameState.activePills[recipe.id.replace('_pill', '')];
+                
+                const el = document.createElement('div');
+                el.className = 'recipe-item';
+                el.innerHTML = `
+                    <div class="recipe-header">
+                        <span class="recipe-name">${recipe.icon} ${recipe.name}</span>
+                        <span class="recipe-duration">${recipe.duration}秒</span>
+                    </div>
+                    <div class="recipe-desc">${recipe.desc}</div>
+                    <div class="recipe-cost">消耗：${recipe.cost.stone} 💎</div>
+                    <button class="recipe-btn" onclick="craftPill('${recipe.id}')" ${!canAfford || isActive ? 'disabled' : ''}>
+                        ${isActive ? '生效中' : '炼制'}
+                    </button>
+                `;
+                container.appendChild(el);
+            });
+        }
+        
+        function craftPill(recipeId) {
+            const recipe = ALCHEMY_RECIPES.find(r => r.id === recipeId);
+            if (!recipe) return;
+            
+            if (gameState.stoneCount < recipe.cost.stone) {
+                showToast('灵石不足！');
+                return;
+            }
+            
+            gameState.stoneCount -= recipe.cost.stone;
+            recipe.effect();
+            
+            updateStats();
+            updateShopUI();
+            updateAlchemyUI();
+        }
+        
+        function showAlchemyPanel() {
+            const panel = document.getElementById('alchemyPanel');
+            if (panel) {
+                panel.scrollIntoView({ behavior: 'smooth' });
+                updateAlchemyUI();
+            }
+        }
+        
+        // 核心玩法
+        function captureQi(count, event) {
+            let bonus = getCultivationBonus();
+            const luckyLevel = gameState.shopLevels.lucky_charm;
+            
+            // 丹药效果
+            const luckMultiplier = getPillEffect('luck');
+            
+            let actualCount = Math.floor(count * (1 + bonus / 100) * luckMultiplier);
+            
+            for (let i = 0; i < actualCount; i++) {
+                if (Math.random() < luckyLevel * 0.2) actualCount++;
+            }
+            
+            for (let i = 0; i < actualCount; i++) {
+                setTimeout(() => {
+                    gameState.captureCount++;
+                    gameState.inventory.push(createQiItem());
+                    updateInventory();
+                }, i * 80);
+            }
+            
+            if (event) createParticles(event.clientX, event.clientY, '✨', actualCount > 3 ? 8 : 5);
+            updateStats();
+            
+            const msg = bonus > 0 || luckyLevel > 0 || luckMultiplier > 1
+                ? `获得${actualCount}团灵气！（+${bonus}% +${luckyLevel*20}% ${luckMultiplier > 1 ? '丹药x' + luckMultiplier : ''}）`
+                : `获得${actualCount}团灵气！`;
+            setTimeout(() => showToast(msg), actualCount * 80);
+        }
+        
+        function selectItem(item) {
+            gameState.selectedItem = gameState.selectedItem === item ? null : item;
+            updateInventory();
+        }
+        
+        function onCellClick(row, col) {
+            const cellItem = gameState.grid[row][col];
+            
+            if (cellItem) {
+                gameState.inventory.push(cellItem);
+                gameState.grid[row][col] = null;
+                updateInventory();
+                updateGrid();
+                showToast('灵气已收回');
+                return;
+            }
+            
+            if (gameState.selectedItem) {
+                gameState.grid[row][col] = gameState.selectedItem;
+                const idx = gameState.inventory.indexOf(gameState.selectedItem);
+                if (idx > -1) gameState.inventory.splice(idx, 1);
+                gameState.selectedItem = null;
+                updateInventory();
+                updateGrid();
+                setTimeout(() => checkMerge(row, col), 150);
+            } else {
+                showToast('请先选中灵气');
+            }
+        }
+        
+        // 合成系统
+        function checkMerge(row, col) {
+            const item = gameState.grid[row][col];
+            if (!item) return;
+            
+            const cluster = findConnectedCluster(row, col, item);
+            
+            if (cluster.length >= 3) {
+                performMerge(cluster, item);
+            }
+        }
+        
+        function findConnectedCluster(startRow, startCol, item) {
+            const visited = new Set();
+            const cluster = [];
+            const queue = [[startRow, startCol]];
+            visited.add(`${startRow},${startCol}`);
+            
+            while (queue.length > 0) {
+                const [row, col] = queue.shift();
+                cluster.push([row, col]);
+                
+                for (const [dr, dc] of ADJACENT) {
+                    const nr = row + dr;
+                    const nc = col + dc;
+                    const key = `${nr},${nc}`;
+                    
+                    if (isValidPos(nr, nc) && !visited.has(key)) {
+                        const neighbor = gameState.grid[nr][nc];
+                        if (neighbor && matchItem(neighbor, item)) {
+                            visited.add(key);
+                            queue.push([nr, nc]);
+                        }
+                    }
+                }
+            }
+            
+            return cluster;
+        }
+        
+        let currentCombo = 0;
+        
+        function performMerge(cluster, item) {
+            const count = cluster.length;
+            const target = cluster[0];
+            
+            if (count > gameState.challengeEvents.maxMergeSize) {
+                gameState.challengeEvents.maxMergeSize = count;
+            }
+            
+            for (let i = 1; i < cluster.length; i++) {
+                const [r, c] = cluster[i];
+                gameState.grid[r][c] = null;
+            }
+            
+            let multiplier = count;
+            const mergeBoost = gameState.shopLevels.merge_boost;
+            if (mergeBoost > 0) multiplier *= (1 + mergeBoost * 0.1);
+            if (count >= 5) multiplier *= 1.5;
+            
+            // 丹药效果
+            multiplier *= getPillEffect('merge');
+            
+            let newItem;
+            
+            if (item.isStone) {
+                const levelUp = Math.floor(count / 3);
+                newItem = createStone(item.element, item.level + levelUp);
+                addToCollection(item.element, newItem.level);
+                showToast(`${ELEMENTS[item.element].name}灵石升至${newItem.level}级！`);
+            } else {
+                const newPurity = Math.min(100, Math.floor(item.purity * multiplier));
+                
+                if (newPurity >= 100) {
+                    newItem = createStone(item.element, 1);
+                    gameState.stoneCount++;
+                    addToCollection(item.element, 1);
+                    
+                    if (gameState.currentChallenge) {
+                        gameState.challengeEvents.stonesInTime++;
+                    }
+                    
+                    showToast(`✨ ${ELEMENTS[item.element].name}灵石生成！纯度100%`);
+                } else {
+                    newItem = { id: generateId(), type: 'qi', element: item.element, purity: newPurity, level: 0, isStone: false };
+                    showToast(`${count}连合成！纯度${newPurity}%`);
+                }
+            }
+            
+            gameState.grid[target[0]][target[1]] = newItem;
+            gameState.mergeCount++;
+            currentCombo++;
+            
+            if (currentCombo > gameState.challengeEvents.maxCombo) {
+                gameState.challengeEvents.maxCombo = currentCombo;
+            }
+            
+            if (newItem.isStone && newItem.level > gameState.maxLevel) {
+                gameState.maxLevel = newItem.level;
+            }
+            
+            const cell = document.querySelector(`[data-row="${target[0]}"][data-col="${target[1]}"]`);
+            if (cell) {
+                cell.classList.add('merging');
+                setTimeout(() => cell.classList.remove('merging'), 600);
+            }
+            
+            updateStats();
+            updateGrid();
+            updateShopUI();
+            checkChallengeProgress();
+            
+            setTimeout(() => {
+                checkMerge(target[0], target[1]);
+                currentCombo = 0;
+            }, 400);
+        }
+        
+        // 挑战系统
+        function startChallenge(challengeId) {
+            const challenge = CHALLENGES.find(c => c.id === challengeId);
+            if (!challenge) return;
+            
+            if (gameState.currentChallenge) {
+                showToast('已有进行中的挑战！');
+                return;
+            }
+            
+            gameState.currentChallenge = challengeId;
+            gameState.challengeEvents = { stonesInTime: 0, maxMergeSize: 0, maxCombo: 0 };
+            
+            if (challenge.timeLimit > 0) {
+                challengeTimeLeft = challenge.timeLimit;
+                challengeTimer = setInterval(() => {
+                    challengeTimeLeft--;
+                    updateCurrentChallengeDisplay();
+                    
+                    if (challengeTimeLeft <= 0) {
+                        failChallenge();
+                    }
+                }, 1000);
+            }
+            
+            showToast(`🏆 挑战开始：${challenge.name}！`);
+            updateCurrentChallengeDisplay();
+            updateChallengeList();
+        }
+        
+        function failChallenge() {
+            const challenge = CHALLENGES.find(c => c.id === gameState.currentChallenge);
+            clearInterval(challengeTimer);
+            gameState.currentChallenge = null;
+            challengeTimer = null;
+            showToast(`❌ 挑战失败：${challenge.name}`);
+            updateCurrentChallengeDisplay();
+            updateChallengeList();
+        }
+        
+        function completeChallenge() {
+            const challenge = CHALLENGES.find(c => c.id === gameState.currentChallenge);
+            if (!challenge) return;
+            
+            clearInterval(challengeTimer);
+            challengeTimer = null;
+            
+            gameState.challengeProgress[challenge.id] = { completed: true, time: Date.now() };
+            challenge.executeReward();
+            
+            showToast(`🎉 挑战完成！获得 ${challenge.reward}`);
+            
+            gameState.currentChallenge = null;
+            updateCurrentChallengeDisplay();
+            updateChallengeList();
+            updateStats();
+        }
+        
+        function checkChallengeProgress() {
+            if (!gameState.currentChallenge) return;
+            
+            const challenge = CHALLENGES.find(c => c.id === gameState.currentChallenge);
+            if (!challenge) return;
+            
+            if (challenge.check(gameState, gameState.challengeEvents)) {
+                completeChallenge();
+            } else {
+                updateCurrentChallengeDisplay();
+            }
+        }
+        
+        function updateCurrentChallengeDisplay() {
+            const container = document.getElementById('currentChallengeDisplay');
+            if (!container) return;
+            
+            if (!gameState.currentChallenge) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const challenge = CHALLENGES.find(c => c.id === gameState.currentChallenge);
+            
+            let progressText = '';
+            if (challenge.id === 'speed_run_1' || challenge.id === 'speed_run_2') {
+                progressText = `进度：${gameState.challengeEvents.stonesInTime}/${challenge.check.toString().match(/\d+/)[0]} 灵石`;
+            } else if (challenge.id === 'big_merge') {
+                progressText = `最大合成：${gameState.challengeEvents.maxMergeSize}/8 灵气`;
+            } else if (challenge.id === 'combo_master') {
+                progressText = `最高连击：${gameState.challengeEvents.maxCombo}/3 次`;
+            }
+            
+            container.innerHTML = `
+                <div class="current-challenge">
+                    <div class="current-challenge-title">🏆 ${challenge.name}</div>
+                    ${challenge.timeLimit > 0 ? `<div class="challenge-timer">${Math.floor(challengeTimeLeft / 60)}:${(challengeTimeLeft % 60).toString().padStart(2, '0')}</div>` : ''}
+                    <div class="challenge-target">${challenge.desc}</div>
+                    ${progressText ? `<div class="challenge-current">${progressText}</div>` : ''}
+                    <button class="challenge-btn" onclick="abandonChallenge()">放弃挑战</button>
+                </div>
+            `;
+        }
+        
+        function abandonChallenge() {
+            if (!confirm('确定要放弃当前挑战吗？')) return;
+            
+            clearInterval(challengeTimer);
+            challengeTimer = null;
+            gameState.currentChallenge = null;
+            showToast('已放弃挑战');
+            updateCurrentChallengeDisplay();
+            updateChallengeList();
+        }
+        
+        function updateChallengeList() {
+            const container = document.getElementById('challengeList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            CHALLENGES.forEach(challenge => {
+                const isCompleted = gameState.challengeProgress[challenge.id]?.completed;
+                const isActive = gameState.currentChallenge === challenge.id;
+                
+                const el = document.createElement('div');
+                el.className = 'challenge-item' + (isCompleted ? ' completed' : '') + (isActive ? ' active' : '');
+                el.onclick = () => {
+                    if (!isCompleted && !isActive) {
+                        startChallenge(challenge.id);
+                    }
+                };
+                
+                el.innerHTML = `
+                    <div class="challenge-name">${challenge.name}</div>
+                    <div class="challenge-desc">${challenge.desc}</div>
+                    <div class="challenge-reward">奖励：${challenge.reward}</div>
+                `;
+                
+                container.appendChild(el);
+            });
+        }
+        
+        function showChallengePanel() {
+            const panel = document.getElementById('challengePanel');
+            if (panel) {
+                panel.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // 修为系统
+        function getCurrentRealm() {
+            return REALMS[gameState.realmIndex];
+        }
+        
+        function getMaxXP() {
+            return getCurrentRealm().xpPerStage;
+        }
+        
+        function addXP(amount) {
+            const xpBoost = gameState.shopLevels.xp_boost;
+            if (xpBoost > 0) amount = Math.floor(amount * (1 + xpBoost * 0.2));
+            
+            // 丹药效果
+            amount *= getPillEffect('xp');
+            
+            const maxXP = getMaxXP();
+            gameState.currentXP += amount;
+            
+            if (gameState.currentXP >= maxXP) {
+                gameState.currentXP -= maxXP;
+                gameState.stageIndex++;
+                
+                if (gameState.stageIndex >= getCurrentRealm().stages.length) {
+                    gameState.stageIndex = 0;
+                    gameState.realmIndex++;
+                    
+                    if (gameState.realmIndex >= REALMS.length) {
+                        gameState.realmIndex = REALMS.length - 1;
+                        gameState.currentXP = getMaxXP();
+                    } else {
+                        showToast(`🎉 突破至${REALMS[gameState.realmIndex].name}！+${REALMS[gameState.realmIndex].bonus}%`);
+                    }
+                } else {
+                    showToast(`💫 进入${getCurrentRealm().stages[gameState.stageIndex]}`);
+                }
+            }
+            
+            updateCultivationUI();
+        }
+        
+        function openCultivateModal() {
+            const stones = gameState.inventory.filter(item => item.isStone);
+            if (stones.length === 0) {
+                showToast('没有可吸收的灵石！');
+                return;
+            }
+            
+            let totalXP = 0;
+            stones.forEach(stone => { totalXP += stone.level * 10; });
+            
+            if (confirm(`吸收 ${stones.length} 颗灵石，获得 ${totalXP} 修为？`)) {
+                gameState.inventory = gameState.inventory.filter(item => !item.isStone);
+                addXP(totalXP);
+                updateInventory();
+                showToast(`获得${totalXP}修为`);
+            }
+        }
+        
+        function updateCultivationUI() {
+            const realm = getCurrentRealm();
+            const maxXP = getMaxXP();
+            const percent = Math.floor((gameState.currentXP / maxXP) * 100);
+            
+            document.getElementById('realmName').textContent = realm.name;
+            document.getElementById('realmStage').textContent = realm.stages[gameState.stageIndex];
+            document.getElementById('xpBar').style.width = percent + '%';
+            document.getElementById('xpBar').textContent = percent + '%';
+            document.getElementById('xpText').textContent = `${gameState.currentXP} / ${maxXP} 修为`;
+            document.getElementById('cultivationBonus').textContent = `灵气获取 +${realm.bonus}%`;
+        }
+        
+        // 图鉴系统
+        function showCollectionModal() {
+            const collected = Object.keys(gameState.collection).length;
+            const total = COLLECTION_ITEMS.length;
+            showToast(`📚 已收集 ${collected}/${total} 种灵石 (${Math.floor(collected/total*100)}%)`);
+        }
+        
+        // 工坊系统
+        function updateShopUI() {
+            document.getElementById('shopStoneCount').textContent = gameState.stoneCount;
+            document.getElementById('shopMergeCount').textContent = gameState.mergeCount;
+            
+            const container = document.getElementById('shopItems');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            SHOP_ITEMS.forEach(item => {
+                const level = gameState.shopLevels[item.id];
+                const price = Math.floor(item.basePrice * Math.pow(1.5, level));
+                const canAfford = item.priceType === 'stone' ? gameState.stoneCount >= price : gameState.mergeCount >= price;
+                const isMaxed = level >= item.maxLevel;
+                
+                const el = document.createElement('div');
+                el.className = 'shop-item';
+                el.innerHTML = `
+                    <div class="shop-item-header">
+                        <span class="shop-item-name">${item.name}</span>
+                        <span class="shop-item-price">${isMaxed ? '满级' : price + (item.priceType === 'stone' ? '💎' : '⚡')}</span>
+                    </div>
+                    <div class="shop-item-desc">${item.desc}</div>
+                    <button class="shop-btn" onclick="buyShopItem('${item.id}')" ${!canAfford || isMaxed ? 'disabled' : ''}>
+                        ${isMaxed ? '已满级' : (level === 0 ? '购买' : '升级')}
+                    </button>
+                `;
+                container.appendChild(el);
+            });
+        }
+        
+        function buyShopItem(itemId) {
+            const item = SHOP_ITEMS.find(i => i.id === itemId);
+            const level = gameState.shopLevels[itemId];
+            const price = Math.floor(item.basePrice * Math.pow(1.5, level));
+            
+            if (level >= item.maxLevel) return;
+            
+            if (item.priceType === 'stone' && gameState.stoneCount < price) {
+                showToast('灵石不足！'); return;
+            }
+            if (item.priceType === 'merge' && gameState.mergeCount < price) {
+                showToast('合成点不足！'); return;
+            }
+            
+            if (item.priceType === 'stone') gameState.stoneCount -= price;
+            else gameState.mergeCount -= price;
+            
+            gameState.shopLevels[itemId]++;
+            showToast(`${item.name}升级成功！`);
+            updateShopUI();
+            
+            if (itemId === 'auto_capture') startAutoCapture();
+        }
+        
+        function startAutoCapture() {
+            if (autoCaptureInterval) clearInterval(autoCaptureInterval);
+            
+            const level = gameState.shopLevels.auto_capture;
+            if (level === 0) return;
+            
+            const interval = Math.max(2000, (10 - level * 1.5) * 1000);
+            autoCaptureInterval = setInterval(() => captureQi(1), interval);
+        }
+        
+        // 存档
+        function saveGame() {
+            localStorage.setItem(CONFIG.SAVE_KEY, JSON.stringify(gameState));
+            showToast('💾 已保存！');
+        }
+        
+        function loadGame() {
+            const data = localStorage.getItem(CONFIG.SAVE_KEY);
+            if (data) {
+                gameState = JSON.parse(data);
+                updateInventory();
+                updateGrid();
+                updateStats();
+                updateCultivationUI();
+                updateShopUI();
+                if (document.getElementById('challengeList')) updateChallengeList();
+                if (document.getElementById('alchemyRecipeList')) updateAlchemyUI();
+                if (gameState.shopLevels.auto_capture > 0) startAutoCapture();
+                showToast('📂 已读取！');
+            }
+        }
+        
+        function resetGame() {
+            if (confirm('确定重置？所有进度清空！')) {
+                if (autoCaptureInterval) clearInterval(autoCaptureInterval);
+                if (challengeTimer) clearInterval(challengeTimer);
+                if (pillTimer) clearInterval(pillTimer);
+                localStorage.removeItem(CONFIG.SAVE_KEY);
+                location.reload();
+            }
+        }
+        
+        // 界面更新
+        function updateInventory() {
+            const container = document.getElementById('inventory');
+            document.getElementById('inventoryCount').textContent = gameState.inventory.length;
+            
+            if (gameState.inventory.length === 0) {
+                container.innerHTML = '<div class="empty-inventory">点击捕捉灵气</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            gameState.inventory.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'inventory-item' + (gameState.selectedItem === item ? ' selected' : '');
+                el.onclick = () => selectItem(item);
+                
+                const element = ELEMENTS[item.element];
+                el.innerHTML = `
+                    <div class="item-icon ${element.color}">
+                        ${element.icon}
+                        <div class="purity-bar"><div class="purity-fill" style="width: ${item.purity}%"></div></div>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${element.name}${item.isStone ? '灵石' : '灵气'}</div>
+                        <div class="item-desc">${item.isStone ? `Lv.${item.level}` : `${item.purity}%`}</div>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+        
+        function initGrid() {
+            const container = document.getElementById('grid');
+            container.innerHTML = '';
+            for (let r = 0; r < CONFIG.GRID_SIZE; r++) {
+                for (let c = 0; c < CONFIG.GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.onclick = () => onCellClick(r, c);
+                    container.appendChild(cell);
+                }
+            }
+            updateGrid();
+        }
+        
+        function updateGrid() {
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                const item = gameState.grid[r][c];
+                cell.innerHTML = '';
+                if (item) {
+                    const element = ELEMENTS[item.element];
+                    cell.innerHTML = `
+                        <div class="cell-content ${element.color}">
+                            ${element.icon}
+                            ${!item.isStone ? `<span class="cell-purity">${item.purity}%</span>` : ''}
+                            ${item.isStone ? `<span class="cell-level">${item.level}</span>` : ''}
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        function updateStats() {
+            document.getElementById('captureCount').textContent = gameState.captureCount;
+            document.getElementById('mergeCount').textContent = gameState.mergeCount;
+            document.getElementById('stoneCount').textContent = gameState.stoneCount;
+            const completed = Object.keys(gameState.challengeProgress).length;
+            document.getElementById('challengeCompleted').textContent = `${completed}/${CHALLENGES.length}`;
+        }
+        
+        // 初始化
+        function init() {
+            initGrid();
+            const saved = localStorage.getItem(CONFIG.SAVE_KEY);
+            if (saved) {
+                loadGame();
+            } else {
+                for (let i = 0; i < CONFIG.INITIAL_QI_COUNT; i++) {
+                    gameState.inventory.push(createQiItem());
+                }
+                updateInventory();
+                updateStats();
+                updateCultivationUI();
+                updateShopUI();
+                updateChallengeList();
+                updateAlchemyUI();
+            }
+            
+            // 定时器
+            setInterval(() => { if (gameState.mergeCount > 0) saveGame(); }, CONFIG.AUTO_SAVE_INTERVAL);
+            setInterval(updateActivePills, 1000); // 每秒更新丹药状态
+        }
+        
+        init();
+    </script>
+</body>
+</html>
