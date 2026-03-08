@@ -1,0 +1,385 @@
+/**
+ * 布局样式 - 页面结构和响应式
+ * 简洁 · 响应式 · 移动端优先
+ */
+
+/* ========== 页面布局 ========== */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--gray-50);
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+/* 顶部导航 */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.navbar-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* 主内容区 */
+.main {
+  flex: 1;
+  padding: var(--space-4);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ========== 容器 ========== */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.container-narrow {
+  max-width: 640px;
+}
+
+.container-wide {
+  max-width: 1440px;
+}
+
+/* ========== 网格系统 ========== */
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* 响应式网格 */
+@media (min-width: 640px) {
+  .grid-sm-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-sm-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .grid-md-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-md-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-md-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .grid-lg-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-lg-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-lg-5 { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* ========== Flex布局 ========== */
+.flex {
+  display: flex;
+}
+
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+
+.flex-1 { flex: 1; }
+.flex-none { flex: none; }
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-5 { gap: var(--space-5); }
+
+/* ========== 间距 ========== */
+.p-4 { padding: var(--space-4); }
+.p-5 { padding: var(--space-5); }
+.p-6 { padding: var(--space-6); }
+
+.py-4 { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+.py-6 { padding-top: var(--space-6); padding-bottom: var(--space-6); }
+
+.px-4 { padding-left: var(--space-4); padding-right: var(--space-4); }
+.px-5 { padding-left: var(--space-5); padding-right: var(--space-5); }
+
+.m-4 { margin: var(--space-4); }
+
+.mt-2 { margin-top: var(--space-2); }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+
+.mb-2 { margin-bottom: var(--space-2); }
+.mb-4 { margin-bottom: var(--space-4); }
+
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+/* ========== 文本样式 ========== */
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+.text-gray-500 { color: var(--gray-500); }
+.text-gray-600 { color: var(--gray-600); }
+.text-gray-700 { color: var(--gray-700); }
+.text-gray-900 { color: var(--gray-900); }
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ========== 游戏专用布局 ========== */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--space-1);
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.game-cell {
+  aspect-ratio: 1;
+  background: var(--pure-white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.game-cell:hover {
+  border-color: var(--gray-400);
+  box-shadow: var(--shadow-md);
+}
+
+.game-cell:active {
+  transform: scale(0.95);
+  box-shadow: inset var(--shadow-sm);
+}
+
+.game-cell.selected {
+  border-color: var(--gray-900);
+  box-shadow: 0 0 0 2px var(--gray-900);
+}
+
+.game-cell .level {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: var(--gray-900);
+  color: var(--pure-white);
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-cell .purity {
+  position: absolute;
+  bottom: 2px;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--gray-600);
+  background: rgba(255,255,255,0.9);
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* 库存网格 */
+.inventory-grid {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding: var(--space-2);
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.inventory-item {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  background: var(--pure-white);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: all var(--transition-fast);
+}
+
+.inventory-item:hover {
+  border-color: var(--gray-400);
+}
+
+.inventory-item.selected {
+  border-color: var(--gray-900);
+  background: var(--gray-900);
+  color: var(--pure-white);
+}
+
+.inventory-item .icon {
+  font-size: 28px;
+  margin-bottom: 2px;
+}
+
+.inventory-item .meta {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* ========== 统计面板 ========== */
+.stats-panel {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .stats-panel {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-item {
+  background: var(--pure-white);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  border: 1px solid var(--gray-200);
+}
+
+.stat-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ========== 进度条 ========== */
+.progress {
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--gray-900);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+/* ========== 响应式断点 ========== */
+@media (max-width: 639px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  
+  .main {
+    padding: var(--space-3);
+  }
+}
+
+@media (min-width: 640px) {
+  .show-mobile-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: var(--space-6);
+  }
+  
+  .game-grid {
+    max-width: 480px;
+  }
+  
+  .game-cell {
+    font-size: 28px;
+  }
+}
+
+/* 安全区域适配 */
+@supports (padding: max(0px)) {
+  .navbar-content {
+    padding-top: max(var(--space-4), env(safe-area-inset-top));
+    padding-left: max(var(--space-5), env(safe-area-inset-left));
+    padding-right: max(var(--space-5), env(safe-area-inset-right));
+  }
+  
+  .page {
+    padding-bottom: max(80px, env(safe-area-inset-bottom));
+  }
+}

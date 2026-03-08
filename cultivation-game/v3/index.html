@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f3460">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="../manifest.json">
+  <title>修仙合成系统 - V3.0 模块化架构</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🔮 修仙合成系统 V3.0</h1>
+    <p class="subtitle">模块化架构 · 高可扩展</p>
+    
+    <!-- 存档槽选择 -->
+    <div class="save-slot-bar" id="saveSlotBar"></div>
+    
+    <!-- 存档操作 -->
+    <div class="slot-actions">
+      <button class="btn btn-success" onclick="app.saveCurrent()">💾 保存</button>
+      <button class="btn btn-info" onclick="app.showSlotManager()">📂 管理</button>
+      <button class="btn btn-primary" onclick="app.exportCurrent()">📤 导出</button>
+    </div>
+    
+    <!-- 存档信息 -->
+    <div class="save-info-panel" id="saveInfoPanel"></div>
+    
+    <!-- 功能按钮 -->
+    <div class="top-bar">
+      <button class="btn btn-primary" onclick="app.capture(1)">✋ 捕捉</button>
+      <button class="btn btn-primary" onclick="app.capture(5)">✨ ×5</button>
+      <button class="btn btn-primary" onclick="app.capture(10)">🌟 ×10</button>
+      <button class="btn btn-collection" onclick="app.showCollection()">📚 图鉴</button>
+      <button class="btn btn-challenge" onclick="app.showChallenge()">🏆 挑战</button>
+      <button class="btn btn-info" onclick="app.showAlchemy()">⚗️ 炼丹</button>
+      <button class="btn btn-warning" onclick="app.showShop()">🏪 工坊</button>
+      <button class="btn btn-primary" onclick="app.showImport()">📥 导入</button>
+    </div>
+    
+    <div class="game-area">
+      <!-- 合成器 -->
+      <div class="synthesizer">
+        <div class="synthesizer-header">
+          <span class="synthesizer-title">⚗️ 合成器 (8×8)</span>
+          <span style="font-size:10px;color:#888;">选中库存→点击格子</span>
+        </div>
+        <div class="grid-8x8" id="grid"></div>
+      </div>
+      
+      <!-- 底部面板 -->
+      <div class="bottom-panel">
+        <div class="panel">
+          <div class="panel-title">📦 库存</div>
+          <div class="inventory-scroll" id="inventory"></div>
+        </div>
+        
+        <div class="panel">
+          <div class="panel-title">🧘‍♂️ 修为</div>
+          <div class="realm-name" id="realmName">--</div>
+          <div class="realm-stage" id="realmStage">--</div>
+          <div class="xp-bar-container">
+            <div class="xp-bar" id="xpBar" style="width:0%"></div>
+          </div>
+          <button class="btn btn-primary cultivate-btn" onclick="app.cultivate()">🧘‍♂️ 吸收修炼</button>
+        </div>
+      </div>
+      
+      <!-- 统计 -->
+      <div class="panel">
+        <div class="panel-title">📊 统计</div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="label">🎯 捕捉</div><div class="value" id="captureCount">0</div></div>
+          <div class="stat-box"><div class="label">⚡ 合成</div><div class="value" id="mergeCount">0</div></div>
+          <div class="stat-box"><div class="label">💎 灵石</div><div class="value" id="stoneCount">0</div></div>
+          <div class="stat-box"><div class="label">👑 最高</div><div class="value" id="maxLevel">0</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 浮动按钮 -->
+  <button class="fab" onclick="app.quickCapture()">✨</button>
+  
+  <!-- 模态框 -->
+  <div class="modal" id="mainModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle"></span>
+        <button class="modal-close" onclick="app.closeModal()">×</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- 应用入口 -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

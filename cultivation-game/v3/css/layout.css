@@ -1,0 +1,344 @@
+/**
+ * 布局样式 - 页面结构和响应式
+ */
+
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: var(--space-md);
+}
+
+/* 标题 */
+h1 {
+  text-align: center;
+  font-size: 20px;
+  background: linear-gradient(90deg, #ffd700, #ff6b6b, #4ecdc4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: var(--space-xs);
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-bottom: var(--space-md);
+}
+
+/* 存档槽栏 */
+.save-slot-bar {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  overflow-x: auto;
+  padding-bottom: var(--space-xs);
+}
+
+.save-slot {
+  flex-shrink: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-panel);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.save-slot.active {
+  background: var(--gradient-primary);
+  border-color: #667eea;
+}
+
+.save-slot.empty {
+  opacity: 0.6;
+}
+
+/* 操作按钮栏 */
+.slot-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+/* 顶部功能栏 */
+.top-bar {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+  overflow-x: auto;
+  padding-bottom: var(--space-xs);
+}
+
+.top-bar .btn {
+  flex-shrink: 0;
+}
+
+/* 游戏区域 */
+.game-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* 合成器 */
+.synthesizer {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+}
+
+.synthesizer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.synthesizer-title {
+  font-size: 14px;
+  color: var(--text-gold);
+}
+
+/* 8x8 网格 */
+.grid-8x8 {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  aspect-ratio: 1;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.grid-cell {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+}
+
+.grid-cell:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 单元格内容 */
+.cell-content {
+  width: 70%;
+  height: 70%;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  position: relative;
+}
+
+.cell-purity {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+.cell-level {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #ffd700, #ff6b6b);
+  border-radius: var(--radius-full);
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: bold;
+}
+
+/* 元素颜色 */
+.element-gold { background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b); }
+.element-wood { background: radial-gradient(circle at 30% 30%, #4ecdc4, #228b22); }
+.element-water { background: radial-gradient(circle at 30% 30%, #45b7d1, #1e3a8a); }
+.element-fire { background: radial-gradient(circle at 30% 30%, #ff6b6b, #c41e3a); }
+.element-earth { background: radial-gradient(circle at 30% 30%, #d4a574, #8b4513); }
+
+/* 底部面板 */
+.bottom-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+/* 库存 */
+.inventory-scroll {
+  display: flex;
+  gap: var(--space-sm);
+  overflow-x: auto;
+  padding-bottom: var(--space-xs);
+}
+
+.inventory-item {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  background: var(--bg-panel);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.inventory-item.selected {
+  border-color: var(--text-gold);
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.item-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.item-info {
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+
+/* 修为面板 */
+.realm-name {
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.realm-stage {
+  text-align: center;
+  font-size: 10px;
+  color: #f5af19;
+  margin-bottom: var(--space-sm);
+}
+
+.xp-bar-container {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-sm);
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+}
+
+.xp-bar {
+  height: 100%;
+  background: var(--gradient-gold);
+  transition: width 0.3s;
+}
+
+/* 统计网格 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.03);
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.stat-box .label {
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+
+.stat-box .value {
+  font-size: 14px;
+  color: var(--text-gold);
+  font-weight: bold;
+}
+
+/* 存档信息面板 */
+.save-info-panel {
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  border: 1px solid var(--border-color);
+}
+
+.save-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.save-info-title {
+  font-size: 14px;
+  color: var(--text-gold);
+}
+
+.save-info-time {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.save-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.save-stat-item {
+  text-align: center;
+  padding: var(--space-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+}
+
+.save-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--text-gold);
+}
+
+.save-stat-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
+}
+
+/* 响应式 */
+@media (min-width: 768px) {
+  .container {
+    max-width: 800px;
+  }
+  
+  .bottom-panel {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

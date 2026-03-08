@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f3460">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <title>修仙合成系统 - V2.0 多存档</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .container { max-width: 100%; margin: 0 auto; padding: 10px; }
+        h1 {
+            text-align: center;
+            font-size: 20px;
+            background: linear-gradient(90deg, #ffd700, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+        .subtitle { text-align: center; color: #888; font-size: 11px; margin-bottom: 10px; }
+        
+        /* 存档选择器 */
+        .save-slot-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .save-slot {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .save-slot.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+        }
+        .save-slot.empty {
+            opacity: 0.6;
+        }
+        .save-slot .slot-number { font-weight: bold; }
+        .save-slot .slot-name { font-size: 10px; color: #aaa; }
+        
+        /* 存档管理按钮 */
+        .slot-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .btn-success { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .btn-danger { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+        .btn-info { background: linear-gradient(135deg, #00d2ff, #3a7bd5); }
+        
+        /* 存档信息面板 */
+        .save-info-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .save-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .save-info-title { font-size: 14px; color: #ffd700; }
+        .save-info-time { font-size: 10px; color: #888; }
+        .save-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .save-stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        .save-stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .save-stat-label {
+            font-size: 10px;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        /* 游戏区域 */
+        .game-area { display: flex; flex-direction: column; gap: 10px; }
+        
+        .top-bar {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .top-bar .btn { flex-shrink: 0; flex: none; padding: 8px 14px; border-radius: 20px; }
+        
+        /* 合成器 */
+        .synthesizer {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .synthesizer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .synthesizer-title { font-size: 14px; color: #ffd700; }
+        .grid-8x8 {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 3px;
+            aspect-ratio: 1;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .grid-cell {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .grid-cell:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
+        .cell-content {
+            width: 70%; height: 70%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            position: relative;
+        }
+        .cell-purity {
+            position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+            font-size: 7px; background: rgba(0,0,0,0.8); padding: 1px 3px; border-radius: 3px;
+        }
+        .cell-level {
+            position: absolute; top: -3px; right: -3px;
+            width: 14px; height: 14px;
+            background: linear-gradient(135deg, #ffd700, #ff6b6b);
+            border-radius: 50%; font-size: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: #000; font-weight: bold;
+        }
+        
+        .element-gold { background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b); }
+        .element-wood { background: radial-gradient(circle at 30% 30%, #4ecdc4, #228b22); }
+        .element-water { background: radial-gradient(circle at 30% 30%, #45b7d1, #1e3a8a); }
+        .element-fire { background: radial-gradient(circle at 30% 30%, #ff6b6b, #c41e3a); }
+        .element-earth { background: radial-gradient(circle at 30% 30%, #d4a574, #8b4513); }
+        
+        /* 底部面板 */
+        .bottom-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel-title {
+            font-size: 12px;
+            color: #ffd700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .inventory-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .inventory-item {
+            flex-shrink: 0;
+            width: 50px; height: 50px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .inventory-item.selected { border-color: #ffd700; background: rgba(255,215,0,0.1); }
+        .item-icon { font-size: 20px; margin-bottom: 2px; }
+        .item-info { font-size: 9px; color: #888; }
+        
+        .realm-name { font-size: 14px; font-weight: bold; text-align: center;
+            background: linear-gradient(90deg, #f5af19, #f12711);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .realm-stage { text-align: center; font-size: 10px; color: #f5af19; margin-bottom: 5px; }
+        .xp-bar-container { background: rgba(0,0,0,0.3); border-radius: 6px; height: 12px; overflow: hidden; margin-bottom: 8px; }
+        .xp-bar { height: 100%; background: linear-gradient(90deg, #f5af19, #f12711); transition: width 0.3s; }
+        .cultivate-btn { width: 100%; padding: 8px; font-size: 12px; border-radius: 8px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .stat-box { background: rgba(255,255,255,0.03); padding: 6px; border-radius: 6px; text-align: center; }
+        .stat-box .label { font-size: 9px; color: #888; }
+        .stat-box .value { font-size: 14px; color: #ffd700; font-weight: bold; }
+        
+        .fab {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            border: none;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 模态框 */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-title { font-size: 16px; color: #ffd700; }
+        .modal-close { background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+        
+        /* 存档槽列表 */
+        .slot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .slot-item {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .slot-item:hover { border-color: #667eea; }
+        .slot-item.selected { border-color: #667eea; background: rgba(102,126,234,0.1); }
+        .slot-icon { font-size: 28px; }
+        .slot-details { flex: 1; }
+        .slot-title { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
+        .slot-meta { font-size: 10px; color: #888; }
+        .slot-actions-mini {
+            display: flex;
+            gap: 5px;
+        }
+        .slot-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 10px;
+            cursor: pointer;
+            color: white;
+        }
+        .slot-btn-load { background: #11998e; }
+        .slot-btn-delete { background: #ff416c; }
+        
+        /* 输入框 */
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 14px;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #ffd700;
+            border-radius: 20px;
+            padding: 10px 20px;
+            color: #ffd700;
+            font-size: 13px;
+            z-index: 3000;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 修仙合成系统 V2.0</h1>
+        <p class="subtitle">捕捉天地灵气，踏上仙途</p>
+        
+        <!-- 存档槽选择栏 -->
+        <div class="save-slot-bar" id="saveSlotBar">
+            <div class="save-slot active" onclick="selectSlot(0)">
+                <span class="slot-number">#1</span>
+                <span class="slot-name" id="slotName0">自动存档</span>
+            </div>
+            <div class="save-slot" onclick="selectSlot(1)">
+                <span class="slot-number">#2</span>
+                <span class="slot-name" id="slotName1">空槽位</span>
+            </div>
+            <div class="save-slot" onclick="selectSlot(2)">
+                <span class="slot-number">#3</span>
+                <span class="slot-name" id="slotName2">空槽位</span>
+            </div>
+        </div>
+        
+        <!-- 存档操作按钮 -->
+        <div class="slot-actions">
+            <button class="btn btn-success" onclick="saveToCurrentSlot()">💾 保存</button>
+            <button class="btn btn-info" onclick="showSlotManager()">📂 管理</button>
+            <button class="btn btn-primary" onclick="exportCurrentSlot()">📤 导出</button>
+        </div>
+        
+        <!-- 当前存档信息 -->
+        <div class="save-info-panel" id="saveInfoPanel">
+            <div class="save-info-header">
+                <span class="save-info-title">📊 当前进度</span>
+                <span class="save-info-time" id="saveTime">--</span>
+            </div>
+            <div class="save-stats-grid">
+                <div class="save-stat-item">
+                    <div class="save-stat-value" id="infoRealm">炼气</div>
+                    <div class="save-stat-label">境界</div>
+                </div>
+                <div class="save-stat-item">
+                    <div class="save-stat-value" id="infoPlayTime">0:00</div>
+                    <div class="save-stat-label">游戏时长</div>
+                </div>
+                <div class="save-stat-item">
+                    <div class="save-stat-value" id="infoStones">0</div>
+                    <div class="save-stat-label">灵石</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="top-bar">
+            <button class="btn btn-primary" onclick="captureQi(1)">✋ 捕捉</button>
+            <button class="btn btn-primary" onclick="captureQi(5)">✨ ×5</button>
+            <button class="btn btn-primary" onclick="captureQi(10)">🌟 ×10</button>
+            <button class="btn btn-info" onclick="showImportModal()">📥 导入</button>
+        </div>
+        
+        <div class="game-area">
+            <div class="synthesizer">
+                <div class="synthesizer-header">
+                    <span class="synthesizer-title">⚗️ 合成器 (8×8)</span>
+                    <span style="font-size:10px;color:#888;">选中库存→点击格子</span>
+                </div>
+                <div class="grid-8x8" id="grid"></div>
+            </div>
+            
+            <div class="bottom-panel">
+                <div class="panel">
+                    <div class="panel-title">📦 库存</div>
+                    <div class="inventory-scroll" id="inventory">
+                        <div style="padding:10px;color:#666;font-size:10px;">点击捕捉灵气</div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-title">🧘‍♂️ 修为</div>
+                    <div class="realm-name" id="realmName">炼气期</div>
+                    <div class="realm-stage" id="realmStage">前期</div>
+                    <div class="xp-bar-container"><div class="xp-bar" id="xpBar" style="width:0%"></div></div>
+                    <button class="btn btn-primary cultivate-btn" onclick="openCultivateModal()">🧘‍♂️ 吸收修炼</button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title">📊 统计</div>
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="label">🎯 捕捉</div><div class="value" id="captureCount">0</div></div>
+                    <div class="stat-box"><div class="label">⚡ 合成</div><div class="value" id="mergeCount">0</div></div>
+                    <div class="stat-box"><div class="label">💎 灵石</div><div class="value" id="stoneCount">0</div></div>
+                    <div class="stat-box"><div class="label">👑 最高</div><div class="value" id="maxLevel">0</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="fab" onclick="quickCapture()">✨</button>
+    
+    <!-- 存档管理模态框 -->
+    <div class="modal" id="slotManagerModal">
+        <div class="modal-content">
+            <div class="modal-header"
+003e
+                <span class="modal-title">📂 存档管理</span>
+                <button class="modal-close" onclick="closeModal('slotManagerModal')">×</button>
+            </div>
+            
+            <div class="slot-list" id="slotList"></div>
+            
+            <div class="input-group">
+                <label>重命名当前存档</label>
+                <input type="text" id="renameInput" placeholder="输入新名称..." maxlength="20">
+            </div>
+            
+            <button class="btn btn-primary" onclick="renameCurrentSlot()" style="width:100%;margin-bottom:10px;">✏️ 重命名</button>
+            <button class="btn btn-danger" onclick="deleteCurrentSlot()" style="width:100%;">🗑️ 删除此存档</button>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const CONFIG = {
+            GRID_SIZE: 8,
+            INITIAL_QI_COUNT: 10,
+            SAVE_KEY_PREFIX: 'cultivation_v2_slot_',
+            SETTINGS_KEY: 'cultivation_v2_settings',
+            AUTO_SAVE_INTERVAL: 30000,
+            MAX_SLOTS: 3
+        };
+        
+        const ADJACENT = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        
+        const REALMS = [
+            { name: '炼气期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 100, bonus: 0 },
+            { name: '筑基期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 200, bonus: 10 },
+            { name: '金丹期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 400, bonus: 25 },
+            { name: '元婴期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 800, bonus: 50 },
+            { name: '化神期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 1600, bonus: 80 },
+            { name: '炼虚期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 3200, bonus: 120 },
+            { name: '合体期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 6400, bonus: 170 },
+            { name: '大乘期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 12800, bonus: 230 },
+            { name: '渡劫期', stages: ['前期', '中期', '后期', '大圆满'], xpPerStage: 25600, bonus: 300 }
+        ];
+        
+        // 多存档系统数据结构
+        let settings = {
+            currentSlot: 0,
+            slotNames: ['自动存档', '存档 2', '存档 3'],
+            slotExists: [false, false, false]
+        };
+        
+        // 当前游戏状态
+        let gameState = {
+            grid: Array(CONFIG.GRID_SIZE).fill(null).map(() => Array(CONFIG.GRID_SIZE).fill(null)),
+            inventory: [],
+            selectedItem: null,
+            captureCount: 0,
+            mergeCount: 0,
+            stoneCount: 0,
+            maxLevel: 0,
+            realmIndex: 0,
+            stageIndex: 0,
+            currentXP: 0,
+            startTime: Date.now(),
+            totalPlayTime: 0,
+            lastSaveTime: null
+        };
+        
+        let autoSaveInterval = null;
+        let playTimeInterval = null;
+        
+        const ELEMENTS = {
+            gold: { name: '金', icon: '⚔️' },
+            wood: { name: '木', icon: '🌿' },
+            water: { name: '水', icon: '💧' },
+            fire: { name: '火', icon: '🔥' },
+            earth: { name: '土', icon: '🏔️' }
+        };
+        
+        const ELEMENT_KEYS = Object.keys(ELEMENTS);
+        
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 9); }
+        
+        function showToast(msg) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2500);
+        }
+        
+        function vibrate(ms = 20) { if (navigator.vibrate) navigator.vibrate(ms); }
+        
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return h > 0 ? `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}` : `${m}:${s.toString().padStart(2,'0')}`;
+        }
+        
+        // ========== 多存档系统 ==========
+        
+        function loadSettings() {
+            const saved = localStorage.getItem(CONFIG.SETTINGS_KEY);
+            if (saved) settings = JSON.parse(saved);
+            updateSlotBar();
+        }
+        
+        function saveSettings() {
+            localStorage.setItem(CONFIG.SETTINGS_KEY, JSON.stringify(settings));
+        }
+        
+        function getSlotKey(slotIndex) {
+            return CONFIG.SAVE_KEY_PREFIX + slotIndex;
+        }
+        
+        function loadSlot(slotIndex) {
+            const key = getSlotKey(slotIndex);
+            const saved = localStorage.getItem(key);
+            
+            if (saved) {
+                gameState = JSON.parse(saved);
+                gameState.startTime = Date.now();
+                settings.slotExists[slotIndex] = true;
+            } else {
+                // 新建存档
+                resetGameState();
+                settings.slotExists[slotIndex] = false;
+            }
+            
+            settings.currentSlot = slotIndex;
+            saveSettings();
+            updateUI();
+            updateSlotBar();
+        }
+        
+        function saveToSlot(slotIndex) {
+            gameState.totalPlayTime += Math.floor((Date.now() - gameState.startTime) / 1000);
+            gameState.startTime = Date.now();
+            gameState.lastSaveTime = new Date().toLocaleString('zh-CN');
+            
+            const key = getSlotKey(slotIndex);
+            localStorage.setItem(key, JSON.stringify(gameState));
+            
+            settings.slotExists[slotIndex] = true;
+            saveSettings();
+            updateSlotBar();
+            
+            return true;
+        }
+        
+        function deleteSlot(slotIndex) {
+            const key = getSlotKey(slotIndex);
+            localStorage.removeItem(key);
+            settings.slotExists[slotIndex] = false;
+            settings.slotNames[slotIndex] = `存档 ${slotIndex + 1}`;
+            saveSettings();
+            
+            if (settings.currentSlot === slotIndex) {
+                resetGameState();
+                updateUI();
+            }
+            
+            updateSlotBar();
+            renderSlotList();
+        }
+        
+        function renameSlot(slotIndex, newName) {
+            settings.slotNames[slotIndex] = newName || `存档 ${slotIndex + 1}`;
+            saveSettings();
+            updateSlotBar();
+            renderSlotList();
+        }
+        
+        function selectSlot(index) {
+            if (index === settings.currentSlot) return;
+            
+            // 自动保存当前存档
+            if (settings.slotExists[settings.currentSlot]) {
+                saveToSlot(settings.currentSlot);
+            }
+            
+            loadSlot(index);
+            showToast(`已切换到${settings.slotNames[index]}`);
+        }
+        
+        function saveToCurrentSlot() {
+            saveToSlot(settings.currentSlot);
+            showToast(`已保存到 ${settings.slotNames[settings.currentSlot]}`);
+            vibrate([20, 40, 20]);
+        }
+        
+        function resetGameState() {
+            gameState = {
+                grid: Array(CONFIG.GRID_SIZE).fill(null).map(() => Array(CONFIG.GRID_SIZE).fill(null)),
+                inventory: [],
+                selectedItem: null,
+                captureCount: 0,
+                mergeCount: 0,
+                stoneCount: 0,
+                maxLevel: 0,
+                realmIndex: 0,
+                stageIndex: 0,
+                currentXP: 0,
+                startTime: Date.now(),
+                totalPlayTime: 0,
+                lastSaveTime: null
+            };
+            for (let i = 0; i < CONFIG.INITIAL_QI_COUNT; i++) {
+                gameState.inventory.push(createQiItem());
+            }
+        }
+        
+        // ========== UI 更新 ==========
+        
+        function updateSlotBar() {
+            const slots = document.querySelectorAll('.save-slot');
+            slots.forEach((slot, index) => {
+                slot.classList.toggle('active', index === settings.currentSlot);
+                slot.classList.toggle('empty', !settings.slotExists[index]);
+                document.getElementById(`slotName${index}`).textContent = settings.slotNames[index];
+            });
+        }
+        
+        function updateSaveInfo() {
+            const realm = REALMS[gameState.realmIndex];
+            document.getElementById('infoRealm').textContent = realm.name.replace('期', '');
+            document.getElementById('infoPlayTime').textContent = formatTime(gameState.totalPlayTime);
+            document.getElementById('infoStones').textContent = gameState.stoneCount;
+            document.getElementById('saveTime').textContent = gameState.lastSaveTime || '未保存';
+        }
+        
+        // ========== 模态框 ==========
+        
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        
+        function showSlotManager() {
+            renderSlotList();
+            document.getElementById('renameInput').value = settings.slotNames[settings.currentSlot];
+            showModal('slotManagerModal');
+        }
+        
+        function renderSlotList() {
+            const container = document.getElementById('slotList');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < CONFIG.MAX_SLOTS; i++) {
+                const key = getSlotKey(i);
+                const saved = localStorage.getItem(key);
+                let info = { exists: false, realm: '--', time: '空槽位' };
+                
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    info.exists = true;
+                    info.realm = REALMS[data.realmIndex]?.name.replace('期', '') || '--';
+                    info.time = data.lastSaveTime || '未知';
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'slot-item' + (i === settings.currentSlot ? ' selected' : '');
+                item.innerHTML = `
+                    <div class="slot-icon">${info.exists ? '💾' : '📂'}</div>
+                    <div class="slot-details">
+                        <div class="slot-title">${settings.slotNames[i]}</div>
+                        <div class="slot-meta">${info.realm} · ${info.time}</div>
+                    </div>
+                    <div class="slot-actions-mini">
+                        ${i !== settings.currentSlot && info.exists ? `
+                            <button class="slot-btn slot-btn-load" onclick="loadSlotFromManager(${i})">加载</button>
+                        ` : ''}
+                        ${info.exists ? `
+                            <button class="slot-btn slot-btn-delete" onclick="deleteSlotFromManager(${i})">删除</button>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(item);
+            }
+        }
+        
+        function loadSlotFromManager(index) {
+            closeModal('slotManagerModal');
+            selectSlot(index);
+        }
+        
+        function deleteSlotFromManager(index) {
+            if (confirm(`确定要删除"${settings.slotNames[index]}"吗？`)) {
+                deleteSlot(index);
+            }
+        }
+        
+        function renameCurrentSlot() {
+            const name = document.getElementById('renameInput').value.trim();
+            if (name) {
+                renameSlot(settings.currentSlot, name);
+                showToast('重命名成功');
+                closeModal('slotManagerModal');
+            }
+        }
+        
+        function deleteCurrentSlot() {
+            if (confirm('确定要删除当前存档吗？此操作不可恢复！')) {
+                deleteSlot(settings.currentSlot);
+                closeModal('slotManagerModal');
+                showToast('存档已删除');
+            }
+        }
+        
+        // ========== 导入导出 ==========
+        
+        function exportCurrentSlot() {
+            const data = { ...gameState, slotName: settings.slotNames[settings.currentSlot] };
+            const encoded = btoa(JSON.stringify(data));
+            navigator.clipboard.writeText(encoded).then(() => {
+                showToast('存档码已复制到剪贴板');
+            });
+        }
+        
+        function showImportModal() {
+            const code = prompt('粘贴存档码（可选择导入到当前槽位或其他槽位）：\n\n输入格式：[槽位号]:[存档码]\n例如：2:xxxxx 表示导入到第3个槽位\n或直接输入存档码导入当前槽位');
+            if (!code) return;
+            
+            let targetSlot = settings.currentSlot;
+            let actualCode = code;
+            
+            if (code.includes(':')) {
+                const parts = code.split(':');
+                targetSlot = parseInt(parts[0]) - 1;
+                actualCode = parts[1];
+            }
+            
+            if (targetSlot < 0 || targetSlot >= CONFIG.MAX_SLOTS) {
+                showToast('无效的槽位号');
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(atob(actualCode.trim()));
+                if (confirm(`导入到"${settings.slotNames[targetSlot]}"？将覆盖原有数据！`)) {
+                    localStorage.setItem(getSlotKey(targetSlot), JSON.stringify(data));
+                    settings.slotExists[targetSlot] = true;
+                    if (data.slotName) settings.slotNames[targetSlot] = data.slotName;
+                    saveSettings();
+                    
+                    if (targetSlot === settings.currentSlot) {
+                        loadSlot(targetSlot);
+                    } else {
+                        updateSlotBar();
+                    }
+                    showToast('导入成功');
+                }
+            } catch (e) {
+                showToast('存档码无效');
+            }
+        }
+        
+        // ========== 核心玩法 ==========
+        
+        function createQiItem() {
+            const element = ELEMENT_KEYS[Math.floor(Math.random() * ELEMENT_KEYS.length)];
+            return { id: generateId(), type: 'qi', element, purity: 10, level: 0, isStone: false };
+        }
+        
+        function createStone(element, level) {
+            return { id: generateId(), type: 'stone', element, purity: 100, level, isStone: true };
+        }
+        
+        function captureQi(count) {
+            vibrate(10);
+            for (let i = 0; i < count; i++) {
+                gameState.captureCount++;
+                gameState.inventory.push(createQiItem());
+            }
+            updateInventory();
+            updateStats();
+            showToast(`获得${count}团灵气！`);
+        }
+        
+        function quickCapture() { captureQi(1); vibrate([10, 30, 10]); }
+        
+        function updateInventory() {
+            const container = document.getElementById('inventory');
+            if (gameState.inventory.length === 0) {
+                container.innerHTML = '<div style="padding:10px;color:#666;font-size:10px;">点击捕捉灵气</div>';
+                return;
+            }
+            container.innerHTML = '';
+            gameState.inventory.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'inventory-item' + (gameState.selectedItem?.id === item.id ? ' selected' : '');
+                const element = ELEMENTS[item.element];
+                el.innerHTML = `
+                    <span class="item-icon">${element.icon}</span>
+                    <span class="item-info">${item.isStone ? `Lv.${item.level}` : `${item.purity}%`}</span>
+                `;
+                el.onclick = () => {
+                    vibrate(10);
+                    gameState.selectedItem = gameState.selectedItem?.id === item.id ? null : item;
+                    updateInventory();
+                };
+                container.appendChild(el);
+            });
+        }
+        
+        function initGrid() {
+            const container = document.getElementById('grid');
+            for (let r = 0; r < CONFIG.GRID_SIZE; r++) {
+                for (let c = 0; c < CONFIG.GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.onclick = () => onCellClick(r, c);
+                    container.appendChild(cell);
+                }
+            }
+        }
+        
+        function onCellClick(row, col) {
+            const cellItem = gameState.grid[row][col];
+            
+            if (cellItem) {
+                gameState.inventory.push(cellItem);
+                gameState.grid[row][col] = null;
+            }
+            
+            if (gameState.selectedItem) {
+                gameState.grid[row][col] = gameState.selectedItem;
+                const idx = gameState.inventory.findIndex(i => i.id === gameState.selectedItem.id);
+                if (idx > -1) gameState.inventory.splice(idx, 1);
+                gameState.selectedItem = null;
+                updateInventory();
+                updateGrid();
+                setTimeout(() => checkMerge(row, col), 150);
+            }
+        }
+        
+        function checkMerge(row, col) {
+            const item = gameState.grid[row][col];
+            if (!item) return;
+            const cluster = findCluster(row, col, item);
+            if (cluster.length >= 3) performMerge(cluster, item);
+        }
+        
+        function findCluster(sr, sc, item) {
+            const visited = new Set();
+            const cluster = [];
+            const queue = [[sr, sc]];
+            visited.add(`${sr},${sc}`);
+            
+            while (queue.length) {
+                const [r, c] = queue.shift();
+                cluster.push([r, c]);
+                for (const [dr, dc] of ADJACENT) {
+                    const nr = r + dr, nc = c + dc;
+                    const key = `${nr},${nc}`;
+                    if (nr >= 0 && nr < CONFIG.GRID_SIZE && nc >= 0 && nc < CONFIG.GRID_SIZE && !visited.has(key)) {
+                        const n = gameState.grid[nr][nc];
+                        if (n && n.element === item.element && n.purity === item.purity && n.level === item.level) {
+                            visited.add(key);
+                            queue.push([nr, nc]);
+                        }
+                    }
+                }
+            }
+            return cluster;
+        }
+        
+        function performMerge(cluster, item) {
+            const count = cluster.length;
+            const target = cluster[0];
+            for (let i = 1; i < cluster.length; i++) {
+                const [r, c] = cluster[i];
+                gameState.grid[r][c] = null;
+            }
+            
+            let multiplier = count;
+            if (count >= 5) multiplier *= 1.5;
+            
+            let newItem;
+            if (item.isStone) {
+                newItem = createStone(item.element, item.level + Math.floor(count / 3));
+            } else {
+                const purity = Math.min(100, Math.floor(item.purity * multiplier));
+                if (purity >= 100) {
+                    newItem = createStone(item.element, 1);
+                    gameState.stoneCount++;
+                } else {
+                    newItem = { id: generateId(), type: 'qi', element: item.element, purity, level: 0, isStone: false };
+                }
+            }
+            
+            gameState.grid[target[0]][target[1]] = newItem;
+            gameState.mergeCount++;
+            vibrate([20, 30, 20]);
+            if (newItem.isStone && newItem.level > gameState.maxLevel) gameState.maxLevel = newItem.level;
+            updateStats();
+            updateGrid();
+        }
+        
+        function updateGrid() {
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                const item = gameState.grid[r][c];
+                cell.innerHTML = '';
+                if (item) {
+                    const el = ELEMENTS[item.element];
+                    cell.innerHTML = `
+                        <div class="cell-content element-${item.element}">
+                            ${el.icon}
+                            ${!item.isStone ? `<span class="cell-purity">${item.purity}%</span>` : ''}
+                            ${item.isStone ? `<span class="cell-level">${item.level}</span>` : ''}
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        function updateStats() {
+            document.getElementById('captureCount').textContent = gameState.captureCount;
+            document.getElementById('mergeCount').textContent = gameState.mergeCount;
+            document.getElementById('stoneCount').textContent = gameState.stoneCount;
+            document.getElementById('maxLevel').textContent = gameState.maxLevel;
+            
+            const realm = REALMS[gameState.realmIndex];
+            const pct = Math.floor((gameState.currentXP / realm.xpPerStage) * 100);
+            document.getElementById('realmName').textContent = realm.name;
+            document.getElementById('realmStage').textContent = realm.stages[gameState.stageIndex];
+            document.getElementById('xpBar').style.width = pct + '%';
+            
+            updateSaveInfo();
+        }
+        
+        function updateUI() {
+            updateInventory();
+            updateGrid();
+            updateStats();
+        }
+        
+        function openCultivateModal() {
+            const stones = gameState.inventory.filter(i => i.isStone);
+            if (!stones.length) { showToast('没有灵石！'); return; }
+            const xp = stones.reduce((s, i) => s + i.level * 10, 0);
+            if (confirm(`吸收${stones.length}颗灵石，获得${xp}修为？`)) {
+                gameState.inventory = gameState.inventory.filter(i => !i.isStone);
+                gameState.currentXP += xp;
+                while (gameState.currentXP >= REALMS[gameState.realmIndex].xpPerStage) {
+                    gameState.currentXP -= REALMS[gameState.realmIndex].xpPerStage;
+                    gameState.stageIndex++;
+                    if (gameState.stageIndex >= REALMS[gameState.realmIndex].stages.length) {
+                        gameState.stageIndex = 0;
+                        gameState.realmIndex++;
+                        showToast(`🎉 突破${REALMS[gameState.realmIndex].name}！`);
+                    }
+                }
+                updateInventory();
+                updateStats();
+            }
+        }
+        
+        function init() {
+            loadSettings();
+            initGrid();
+            loadSlot(settings.currentSlot);
+            
+            playTimeInterval = setInterval(() => {
+                gameState.totalPlayTime++;
+                updateSaveInfo();
+            }, 1000);
+            
+            autoSaveInterval = setInterval(() => {
+                if (settings.slotExists[settings.currentSlot]) {
+                    saveToSlot(settings.currentSlot);
+                }
+            }, CONFIG.AUTO_SAVE_INTERVAL);
+        }
+        
+        init();
+    </script>
+</body>
+</html>
